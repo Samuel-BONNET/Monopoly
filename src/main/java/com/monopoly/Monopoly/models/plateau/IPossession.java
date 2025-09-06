@@ -1,6 +1,6 @@
 package com.monopoly.Monopoly.models.plateau;
 
-public interface Possession extends Case {
+public interface IPossession extends ICase {
 
     public int getId();
     public int getPrixAchat();

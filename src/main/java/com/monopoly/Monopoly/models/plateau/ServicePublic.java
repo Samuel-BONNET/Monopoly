@@ -1,6 +1,6 @@
 package com.monopoly.Monopoly.models.plateau;
 
-public class ServicePublic implements Possession{
+public class ServicePublic implements IPossession {
     private static int compteur = 0;
     private int id, prix;
     private String nom;

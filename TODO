@@ -1,8 +1,10 @@
 Liste des différentes classe :
 
-XJoueur ( nom, pion, argent, possession)
-Plateau ( case )
-XCase (nom, quartier, prix )
-XCarte ( type, detail )
-XArgent()
-Jeu ()
+fix les id entre diff case;
+lecteur json
+setup borrow, gare, service pu
+prison + 3xdouble (des oui mais pas condition sorti prison)
+defaite / win
+hypotheque
+---TRADE---
+

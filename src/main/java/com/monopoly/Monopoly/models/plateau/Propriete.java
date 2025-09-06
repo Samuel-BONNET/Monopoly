@@ -1,6 +1,6 @@
 package com.monopoly.Monopoly.models.plateau;
 
-public class Propriete implements Possession{
+public class Propriete implements IPossession {
     private static int compteur_id = 0;
     private int id, prix_achat, loyer, groupe_complet, loyer_maison1, loyer_maison2, loyer_maison3, loyer_maison4, loyer_hotel, prix_maison, prix_hotel, nb_maisons, nb_hotel;
     private String nom, quartier;

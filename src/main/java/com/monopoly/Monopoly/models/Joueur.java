@@ -1,6 +1,7 @@
 package com.monopoly.Monopoly.models;
 
 
+import java.sql.SQLOutput;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -12,30 +13,30 @@ public class Joueur {
     public Scanner scan = new Scanner(System.in);
     private static int compteur_id = 0;
     private int id, capitalTotal = 1500, nbPropriete = 0;
-    private String nom, piece;
+    private String nom, pion;
     private Propriete[] listeProprietes = new Propriete[25];// nb max de propriétés
-    private boolean estEnPrison = false;
+    private boolean estEnPrison = false, estEliminer = false;
     private Map<Integer, Integer> capital;
     private Map<Integer, Integer> start = new HashMap<>() {{
         put(500, 2);
-        put(100, 2);
-        put(50, 2);
-        put(20, 6);
-        put(10, 5);
-        put(5, 5);
+        put(100, 4);
+        put(50, 1);
+        put(20, 1);
+        put(10, 2);
+        put(5, 1 );
         put(1, 5);
-    }};
+    }}; // Banque du Joueur
 
 
-    public Joueur(int id, String nom, String piece) {
+    public Joueur(int id, String nom, String pion) {
         this.id = id;
         this.nom = nom;
-        this.piece = piece;
+        this.pion = pion;
         this.capital = start;
     }
 
-    public Joueur(String nom, String piece) {
-        this(compteur_id++, nom, piece);
+    public Joueur(String nom, String pion) {
+        this(compteur_id++, nom, pion);
     }
 
     public static int getCompteur_id() {
@@ -51,7 +52,7 @@ public class Joueur {
     }
 
     public String getPiece() {
-        return piece;
+        return pion;
     }
 
     public boolean getEstEnPrison() {
@@ -60,6 +61,14 @@ public class Joueur {
 
     public void setEstEnPrison(boolean estEnPrison) {
         this.estEnPrison = estEnPrison;
+    }
+
+    public boolean getEstEliminer() {
+        return estEliminer;
+    }
+
+    public void setEstEliminer(boolean estEliminer) {
+        this.estEliminer = estEliminer;
     }
 
     public Map<Integer, Integer> getCapital() {
@@ -133,17 +142,95 @@ public class Joueur {
         return capital;
     }
 
-    public void decrCapital(Map<Integer, Integer> total) throws InsufficientFundsException  {
+    public void decrCapital(int total) throws InsufficientFundsException  {
         try {
-            if (compteCapital(total) > capitalTotal) {
+            if (total > capitalTotal) {
                 throw new Exception("Fonds insuffisants");
             }
             else{
-
-            }
-        } catch (Exception e) {
-            System.out.println("Erreur : " + e.getMessage());
+                boolean conditionArret = false;
+                do {
+                    System.out.println("Choissez comment régler : "+total);
+                    payerMontant(total);
+                }
+                while(!conditionArret);
+                }
+        }catch(InsufficientFundsException e) {
+            System.out.println(e.getMessage());
+            System.out.println(nom + " est éliminé !");
         }
+        catch (Exception e) {
+            System.err.println("Erreur : " + e.getMessage());
+        }
+    }
+
+    public void payerMontant(int totalAregler){
+        Scanner scan = new Scanner(System.in);
+        String reponse;
+        do{
+            System.out.println("Souhaitez vous faire de la monnaie ?");
+            reponse = scan.nextLine();
+            reponse.toLowerCase();
+        } while(reponse.equals("oui") || reponse.equals("yes") ||reponse.equals("ouais") || reponse.equals("non") || reponse.equals("no") ||reponse.equals("nan"));
+        switch (reponse) {
+            // eventuellement fix
+            case "oui", "ouais", "yes":
+                faireMonnaie(capitalTotal);
+                break;
+        }
+        System.out.println("Procéder au reglement de la somme de : "+totalAregler);
+        Map<Integer,Integer> capitalReduit = new HashMap<>();
+        boolean conditionArret = false;
+        int nb500, nb100, nb50, nb20, nb10, nb5,nb1;
+        do{
+            System.out.println("Combien de billet(s) de 500 ?");
+            nb500 = scan.nextInt();
+            conditionArret = nb500 <= capital.getOrDefault(500,0);
+        }while(!conditionArret);
+        conditionArret = false;
+        capitalReduit.put(500, nb500);
+        do {
+            System.out.println("Combien de billet(s) de 100 ?");
+            nb100 = scan.nextInt();
+            conditionArret = nb100 <= capital.getOrDefault(100, 0);
+        }while(!conditionArret);
+        conditionArret = false;
+        capitalReduit.put(100, nb100);
+        do{
+            System.out.println("Combien de billet(s) de 50 ?");
+            nb50 = scan.nextInt();
+            conditionArret = nb50 <= capital.getOrDefault(50, 0);
+        } while(!conditionArret);
+        conditionArret = false;
+        capitalReduit.put(50, nb50);
+        do{
+            System.out.println("Combien de billet(s) de 20 ?");
+            nb20 = scan.nextInt();
+            conditionArret = nb20 <= capital.getOrDefault(20, 0);
+        }while(!conditionArret);
+        conditionArret = false;
+        capitalReduit.put(20, nb20);
+        do{
+            System.out.println("Combien de billet(s) de 10 ?");
+            nb10 = scan.nextInt();
+            conditionArret = nb10 <= capital.getOrDefault(10, 0);
+        }while(!conditionArret);
+        conditionArret = false;
+        capitalReduit.put(10, nb10);
+        do{
+            System.out.println("Combien de billet(s) de 5 ?");
+            nb5 = scan.nextInt();
+            conditionArret = nb5 <= capital.getOrDefault(5, 0);
+        }while(!conditionArret);
+        conditionArret = false;
+        capitalReduit.put(5, nb5);
+        do{
+            System.out.println("Combien de billet(s) de 1 ?");
+            nb1 = scan.nextInt();
+            conditionArret = nb1 <= capital.getOrDefault(1, 0);
+        }while(!conditionArret);
+        capitalReduit.put(1, nb1);
+        scan.close();
     }
 
     public Propriete[] getListe_proprietes() {
@@ -171,12 +258,16 @@ public class Joueur {
         }
     }
 
+    public void avancer(int nbCase){
+        //Todo
+    }
+
     @Override
     public String toString() {
         return "Joueur{" +
                 "id=" + id +
                 ", nom='" + nom + '\'' +
-                ", piece='" + piece + '\'' +
+                ", pion='" + pion + '\'' +
                 ", capital=" + capital +
                 '}';
     }
