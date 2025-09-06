@@ -1,0 +1,10 @@
+[
+  {
+    "numero": 0, "type_case" : "depart", "id_propriété" : null, "nom" : "Depart", "action" : "Credit", "Value" : "200",
+    "numero": 1, "type_case" : "propriete", "id_propriété" : 1, "nom" : "Depart", "action" : "Credit", "Value" : "200",
+    "numero": 2, "type_case" : "Ccomunnauté", "id_propriété" : null, "nom" : "Ccomunnauté", "action" : "Credit", "Value" : "200",
+    "numero": 3, "type_case" : "propriete", "id_propriété" : 2, "nom" : "Depart", "action" : "Credit", "Value" : "200",
+    "numero": 4, "type_case" : "depart", "id_propriété" : null, "nom" : "Depart", "action" : "Credit", "Value" : "200",
+    "numero": 5, "type_case" : "depart", "id_propriété" : null, "nom" : "Depart", "action" : "Credit", "Value" : "200"
+  }
+]

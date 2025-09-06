@@ -1,0 +1,8 @@
+Liste des différentes classe :
+
+XJoueur ( nom, pion, argent, possession)
+Plateau ( case )
+XCase (nom, quartier, prix )
+XCarte ( type, detail )
+XArgent()
+Jeu ()
