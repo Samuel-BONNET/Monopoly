@@ -15,6 +15,10 @@ public class Gare implements IPossession {
         this(compteur++, nom);
     }
 
+    // -------------------------------
+    // 🔧 Getters / Setters
+    // -------------------------------
+
     public int getId() {
         return id;
     }

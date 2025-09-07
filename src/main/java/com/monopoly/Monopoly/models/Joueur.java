@@ -12,7 +12,7 @@ import com.monopoly.Monopoly.models.plateau.Propriete;
 public class Joueur {
     public Scanner scan = new Scanner(System.in);
     private static int compteur_id = 0;
-    private int id, capitalTotal = 1500, nbPropriete = 0;
+    private int id, capitalTotal = 1500, nbPropriete = 0, nbMaison = 0, nbHotel = 0;
     private String nom, pion;
     private Propriete[] listeProprietes = new Propriete[25];// nb max de propriétés
     private boolean estEnPrison = false, estEliminer = false;
@@ -27,7 +27,6 @@ public class Joueur {
         put(1, 5);
     }}; // Banque du Joueur
 
-
     public Joueur(int id, String nom, String pion) {
         this.id = id;
         this.nom = nom;
@@ -38,6 +37,10 @@ public class Joueur {
     public Joueur(String nom, String pion) {
         this(compteur_id++, nom, pion);
     }
+
+    // -------------------------------
+    // 🔧 Getters / Setters
+    // -------------------------------
 
     public static int getCompteur_id() {
         return compteur_id;
@@ -75,6 +78,44 @@ public class Joueur {
         return capital;
     }
 
+    public Propriete[] getListe_proprietes() {
+        return listeProprietes;
+    }
+
+    public Propriete getPropriete(int id){
+        return listeProprietes[id];
+    }
+
+    public int getNbPropriete() {
+        return nbPropriete;
+    }
+
+    public int getNbMaison() {
+        return nbMaison;
+    }
+
+    public int getNbHotel() {
+        return nbHotel;
+    }
+
+    public int getCapitalTotal() {
+        return capitalTotal;
+    }
+
+    @Override
+    public String toString() {
+        return "Joueur{" +
+                "id=" + id +
+                ", nom='" + nom + '\'' +
+                ", pion='" + pion + '\'' +
+                ", capital=" + capital +
+                '}';
+    }
+
+    // -------------------------------
+    // 💰 Gestion Économie
+    // -------------------------------
+
     public int compteCapital(Map<Integer, Integer> capital){
         int total = 0;
         for (Map.Entry<Integer, Integer> clef : capital.entrySet()) {
@@ -92,7 +133,11 @@ public class Joueur {
         capitalTotal = compteCapital(capital); // Actualisation Balance
     }
 
-    public Map<Integer, Integer> faireMonnaie(int totalARendre){
+    public void incrCapital(int total){
+        //Todo
+    }
+
+    public void faireMonnaie(int totalARendre){
         Argent[] listeBillets = {Argent.CINQ_CENTS, Argent.DEUX_CENTS, Argent.CENT, Argent.CINQUANTE, Argent.VINGT, Argent.DIX, Argent.CINQ, Argent.UN};
         int total = 0;
         while(total != totalARendre) {
@@ -139,7 +184,6 @@ public class Joueur {
                     break;
             }
         }
-        return capital;
     }
 
     public void decrCapital(int total) throws InsufficientFundsException  {
@@ -154,13 +198,13 @@ public class Joueur {
                     payerMontant(total);
                 }
                 while(!conditionArret);
-                }
+            }
         }catch(InsufficientFundsException e) {
             System.out.println(e.getMessage());
             System.out.println(nom + " est éliminé !");
         }
         catch (Exception e) {
-            System.err.println("Erreur : " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -233,13 +277,14 @@ public class Joueur {
         scan.close();
     }
 
-    public Propriete[] getListe_proprietes() {
-        return listeProprietes;
+    public void debitReparation(int[] total) throws InsufficientFundsException {
+        // 1er indice = prix maison, 2eme indice = prix hotel
+        decrCapital(getNbMaison()*total[0]+getNbHotel()*total[1]);
     }
 
-    public Propriete getPropriete(int id){
-        return listeProprietes[id];
-    }
+    // -------------------------------
+    // 🏛️ Gestion Patrimoine
+    // -------------------------------
 
     public void ajouterPropriete(Propriete propriete) {
         listeProprietes[nbPropriete++] = propriete;
@@ -258,17 +303,21 @@ public class Joueur {
         }
     }
 
-    public void avancer(int nbCase){
+    public void avancer(String destination){
         //Todo
     }
 
-    @Override
-    public String toString() {
-        return "Joueur{" +
-                "id=" + id +
-                ", nom='" + nom + '\'' +
-                ", pion='" + pion + '\'' +
-                ", capital=" + capital +
-                '}';
+    public void avancer(int nbCases){
+        //todo
+    }
+
+    public void reculer(int nbCases){}
+
+
+
+    // others
+
+    public void carteSortiPrison(){
+        // todo
     }
 }

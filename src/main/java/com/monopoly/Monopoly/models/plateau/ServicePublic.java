@@ -1,6 +1,7 @@
 package com.monopoly.Monopoly.models.plateau;
 
 public class ServicePublic implements IPossession {
+
     private static int compteur = 0;
     private int id, prix;
     private String nom;
@@ -14,6 +15,10 @@ public class ServicePublic implements IPossession {
     ServicePublic(String nom) {
         this(compteur++, nom);
     }
+
+    // -------------------------------
+    // 🔧 Getters / Setters
+    // -------------------------------
 
     public int getId() {
         return id;

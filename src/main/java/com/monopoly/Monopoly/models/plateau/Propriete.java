@@ -1,9 +1,11 @@
 package com.monopoly.Monopoly.models.plateau;
 
 public class Propriete implements IPossession {
+
     private static int compteur_id = 0;
     private int id, prix_achat, loyer, groupe_complet, loyer_maison1, loyer_maison2, loyer_maison3, loyer_maison4, loyer_hotel, prix_maison, prix_hotel, nb_maisons, nb_hotel;
     private String nom, quartier;
+    private boolean estHypothequee = false;
 
     public Propriete(int id, int prix_achat, int loyer, int groupe_complet, int loyer_maison1, int loyer_maison2, int loyer_maison3, int loyer_maison4, int loyer_hotel, int prix_maison, int prix_hotel, String nom, String quartier){
         this.id = id;
@@ -26,6 +28,10 @@ public class Propriete implements IPossession {
     public Propriete( int prix_achat, int loyer, int groupe_complet, int maison1, int maison2, int maison3, int maison4, int hotel, int prix_maison, int prix_hotel, String nom, String quartier){
         this(compteur_id++, prix_achat, loyer, groupe_complet, maison1, maison2, maison3, maison4, hotel, prix_maison, prix_hotel, nom, quartier);
     }
+
+    // -------------------------------
+    // 🔧 Getters / Setters
+    // -------------------------------
 
     public int getId() {
         return id;
@@ -75,8 +81,16 @@ public class Propriete implements IPossession {
         return nb_maisons;
     }
 
+    public void setNb_maisons(int nb_maisons) {
+        this.nb_maisons = nb_maisons;
+    }
+
     public int getNb_hotel() {
         return nb_hotel;
+    }
+
+    public void setNb_hotel(int nb_hotel) {
+        this.nb_hotel = nb_hotel;
     }
 
     public String getNom() {
@@ -87,11 +101,11 @@ public class Propriete implements IPossession {
         return quartier;
     }
 
-    public void setNb_hotel(int nb_hotel) {
-        this.nb_hotel = nb_hotel;
+    public boolean getEstHypothequee() {
+        return estHypothequee;
     }
 
-    public void setNb_maisons(int nb_maisons) {
-        this.nb_maisons = nb_maisons;
+    public void setEstHypothequee(boolean estHypothequee) {
+        this.estHypothequee = estHypothequee;
     }
 }
