@@ -4,6 +4,7 @@ public class CaseEvenement implements ICase{
 
     private int id;
     private String nom;
+    private boolean estHypotheque = false;
 
     CaseEvenement(int id, String nom) {
         this.id = id;
@@ -22,5 +23,11 @@ public class CaseEvenement implements ICase{
         return nom;
     }
 
+    public boolean isEstHypotheque() {
+        return estHypotheque;
+    }
 
+    public void setEstHypotheque(boolean estHypotheque) {
+        this.estHypotheque = estHypotheque;
+    }
 }

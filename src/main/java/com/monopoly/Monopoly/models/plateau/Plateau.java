@@ -16,25 +16,29 @@ public class Plateau {
         setUpPlateau();
     }
 
-    public void setUpPropriete(){
-        try{
-            ObjectMapper mapper = new ObjectMapper();
-            totalPropriete = mapper.readValue(
-                    new File("proprietes.json"),
-                    new TypeReference<List<Propriete>>(){}
-            );
-        }
-        catch (Exception e){
-            e.printStackTrace();
-        }
+    public List<ICase> getTotalPropriete() {
+        return totalCase;
     }
+
+    public ICase[] getPlateau() {
+        return plateau;
+    }
+
+    public List<ICase> getTotalCase() {
+        return totalCase;
+    }
+
+    public ICase getCase(int index) {
+        return plateau[index];
+    }
+
 
     public void setUpPlateau(){
         try{
             ObjectMapper mapper = new ObjectMapper();
             List<CaseJson> caseJsons = mapper.readValue(
-                 new File("cases.json"),
-                 new TypeReference<List<CaseJson>>(){}
+                    new File("cases.json"),
+                    new TypeReference<List<CaseJson>>(){}
             );
 
             plateau = new ICase[40];
@@ -58,6 +62,19 @@ public class Plateau {
                 plateau[caseJson.numero] = caseObjet;
             }
         } catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void setUpPropriete(){
+        try{
+            ObjectMapper mapper = new ObjectMapper();
+            totalPropriete = mapper.readValue(
+                    new File("proprietes.json"),
+                    new TypeReference<List<Propriete>>(){}
+            );
+        }
+        catch (Exception e){
             e.printStackTrace();
         }
     }

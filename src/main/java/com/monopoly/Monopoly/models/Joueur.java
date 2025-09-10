@@ -7,12 +7,14 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.monopoly.Monopoly.models.enums.Argent;
+import com.monopoly.Monopoly.models.plateau.ICase;
+import com.monopoly.Monopoly.models.plateau.IPossession;
 import com.monopoly.Monopoly.models.plateau.Propriete;
 
 public class Joueur {
-    public Scanner scan = new Scanner(System.in);
+    public Scanner scan;
     private static int compteur_id = 0;
-    private int id, capitalTotal = 1500, nbPropriete = 0, nbMaison = 0, nbHotel = 0;
+    private int id, caseActuelle = 0, capitalTotal = 1500, nbPropriete = 0, nbMaison = 0, nbHotel = 0, nbGare =0, nbService = 0;
     private String nom, pion;
     private Propriete[] listeProprietes = new Propriete[25];// nb max de propriétés
     private boolean estEnPrison = false, estEliminer = false;
@@ -58,6 +60,14 @@ public class Joueur {
         return pion;
     }
 
+    public int getCaseActuelle() {
+        return caseActuelle;
+    }
+
+    public void setCaseActuelle(int caseActuelle) {
+        this.caseActuelle = caseActuelle;
+    }
+
     public boolean getEstEnPrison() {
         return estEnPrison;
     }
@@ -100,6 +110,22 @@ public class Joueur {
 
     public int getCapitalTotal() {
         return capitalTotal;
+    }
+
+    public int getNbGare() {
+        return nbGare;
+    }
+
+    public void setNbGare(int nbGare) {
+        this.nbGare = nbGare;
+    }
+
+    public int getNbService() {
+        return nbService;
+    }
+
+    public void setNbService(int nbService) {
+        this.nbService = nbService;
     }
 
     @Override
@@ -186,7 +212,8 @@ public class Joueur {
         }
     }
 
-    public void decrCapital(int total) throws InsufficientFundsException  {
+    public Map<Integer,Integer> decrCapital(int total) throws InsufficientFundsException  {
+        Map<Integer, Integer> somme = Map.of();
         try {
             if (total > capitalTotal) {
                 throw new Exception("Fonds insuffisants");
@@ -195,7 +222,7 @@ public class Joueur {
                 boolean conditionArret = false;
                 do {
                     System.out.println("Choissez comment régler : "+total);
-                    payerMontant(total);
+                    somme = payerMontant(total);
                 }
                 while(!conditionArret);
             }
@@ -206,9 +233,10 @@ public class Joueur {
         catch (Exception e) {
             e.printStackTrace();
         }
+        return somme;
     }
 
-    public void payerMontant(int totalAregler){
+    public Map<Integer, Integer> payerMontant(int totalAregler){
         Scanner scan = new Scanner(System.in);
         String reponse;
         do{
@@ -275,6 +303,7 @@ public class Joueur {
         }while(!conditionArret);
         capitalReduit.put(1, nb1);
         scan.close();
+        return capitalReduit;
     }
 
     public void debitReparation(int[] total) throws InsufficientFundsException {
@@ -294,6 +323,13 @@ public class Joueur {
         listeProprietes[nbPropriete--] = null;
     }
 
+    public boolean possedePropriete(Propriete propriete) {
+        for (Propriete p : listeProprietes){
+            if (p == propriete) return true;
+        }
+        return false;
+    }
+
     public void supprimerPropriete(int id){
         for (Propriete p : listeProprietes){
             if (p.getId() == id){
@@ -303,21 +339,83 @@ public class Joueur {
         }
     }
 
-    public void avancer(String destination){
-        //Todo
+    public void rembourserHypotheque(Propriete propriete) throws InsufficientFundsException {
+        int valeur = (int)Math.round((propriete.getPrixAchat()/2)*1.1);
+        if (this.capitalTotal >= valeur) {
+            this.decrCapital(valeur);
+            propriete.setEstHypothequee(false);
+        }
+        else System.out.println("Capital insuffisant");
     }
 
-    public void avancer(int nbCases){
-        //todo
+    public void choixAchatPropriete(Propriete propriete){
+        if (capitalTotal >= propriete.getPrixAchat()){
+            System.out.println("Souhaitez vous acheter la propriété "+propriete.getNom()+" pour "+propriete.getPrixAchat()+"$ ? (oui/non)");
+            String reponse;
+            do{
+                reponse = scan.nextLine();
+                reponse.toLowerCase();
+            } while(!reponse.equals("oui") || !reponse.equals("yes") || !reponse.equals("ouais") || !reponse.equals("non") || !reponse.equals("no") || !reponse.equals("nan"));
+            switch (reponse) {
+                case "oui", "yes", "ouais":
+                    try {
+                        this.decrCapital(propriete.getPrixAchat());
+                        this.ajouterPropriete(propriete);
+                        System.out.println("Félicitations, vous êtes désormais propriétaire de "+propriete.getNom()+" !");
+                    } catch (InsufficientFundsException e) {
+                        System.out.println(e.getMessage());
+                    }
+                    break;
+                case "non", "no", "nan":
+                    System.out.println("Vous avez choisi de ne pas acheter la propriété.");
+                    break;
+                default:
+                    System.out.println("Réponse non reconnue. Veuillez répondre par 'oui' ou 'non'.");
+                    break;
+            }
+        }
+        else {
+            System.out.println("Capital insuffisant pour acheter cette propriété.");
+        }
     }
 
-    public void reculer(int nbCases){}
+    public void choixAmelioration(Propriete propriete) {
+        System.out.println("Souhaitez vous améliorer la propriété " + propriete.getNom() + " ? (oui/non)");
+        String reponse = scan.nextLine();
+        reponse.toLowerCase();
+        if(reponse.equals("oui") || reponse.equals("yes") || reponse.equals("ouais")){
+            if(propriete.getEstGroupeComplet() && verificationHypothequeGroupe(propriete)){
+                // possibilité de construire / améliorer
+                //todo
+            }
+        }
+    }
+
+
+    public boolean verificationHypothequeGroupe(Propriete propriete) {
+        //Verifie si 1 bien au moins est hypothéqué dans le groupe ( impossiblité de construire )
+        for(Propriete p : listeProprietes){
+            if (p.getQuartier() == propriete.getQuartier() && p.getEstHypothequee()){
+                return true;
+            }
+        }
+        return true;
+    }
 
 
 
     // others
 
     public void carteSortiPrison(){
-        // todo
+        // attribue une carte de sortie de prison au joueur
+        if(this.estEnPrison){
+            setEstEnPrison(false);
+            System.out.println("Vous etes libéré de prison :");
+        }
+        else System.out.println("Vous ne pouvez utiliser cette carte qu'en prison !");
+    }
+
+    public void avancer(int nbCase){
+        caseActuelle = (caseActuelle + nbCase) % 40;
     }
 }

@@ -31,4 +31,17 @@ public class ServicePublic implements IPossession {
     public int getPrixAchat() {
         return prix;
     }
+
+    public boolean getEstHypotheque() {
+        return false;
+    }
+
+    public void setEstHypotheque(boolean estHypotheque) {
+        // Ne fait rien, un service public ne peut pas être hypothéqué
+    }
+
+    public int calculerLoyer() {
+        // ne rien faire
+        return 0;
+    }
 }
