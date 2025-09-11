@@ -14,7 +14,7 @@ import com.monopoly.Monopoly.models.plateau.Propriete;
 public class Joueur {
     public Scanner scan;
     private static int compteur_id = 0;
-    private int id, caseActuelle = 0, capitalTotal = 1500, nbPropriete = 0, nbMaison = 0, nbHotel = 0, nbGare =0, nbService = 0;
+    private int id, caseActuelle = 0, capitalTotal = 1500, nbPropriete = 0, nbMaison = 0, nbHotel = 0, nbGare =0, nbService = 0, tourEntrePrison;
     private String nom, pion;
     private Propriete[] listeProprietes = new Propriete[25];// nb max de propriétés
     private boolean estEnPrison = false, estEliminer = false;
@@ -127,6 +127,16 @@ public class Joueur {
     public void setNbService(int nbService) {
         this.nbService = nbService;
     }
+
+    public int getNbTourEntrePrison() {
+        return tourEntrePrison;
+    }
+
+    public void setNbTourEntrePrison(int nbTourEntrePrison) {
+        this.tourEntrePrison = nbTourEntrePrison;
+    }
+
+
 
     @Override
     public String toString() {
@@ -405,6 +415,11 @@ public class Joueur {
 
 
     // others
+
+    public void allerEnPrison(int tour){
+        this.setEstEnPrison(true);
+        this.tourEntrePrison = tour;
+    }
 
     public void carteSortiPrison(){
         // attribue une carte de sortie de prison au joueur

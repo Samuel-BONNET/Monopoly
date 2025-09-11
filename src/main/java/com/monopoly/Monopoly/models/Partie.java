@@ -88,13 +88,14 @@ public class Partie {
     }
 
     public void tourSuivant() throws InsufficientFundsException {
+        System.out.println("Au tour de :" + listeJoueurs[tourJoueur].getNom());
         lancerDes(0);
         incrTourJoueur();
         switch (listeJoueurs[tourJoueur].getCaseActuelle()){
-            case 1:// valeur propriete
+            case 1,3,6,8,9,11,13,14,16,18,19,21,23,24,26,27,29,31,32,34,37,39:// valeur propriete
                 casePropriete((Propriete)plateau.getTotalCase().get(listeJoueurs[tourJoueur].getCaseActuelle()));
                 break;
-            case 2: // valeur evenement
+            case 2,4,5,7,10,12,15,17,20,22,25,28,30,33,35,36,38: // valeur evenement
                 caseEvent((CaseEvenement)plateau.getTotalCase().get(listeJoueurs[tourJoueur].getCaseActuelle()));
                 break;
             default:
@@ -139,6 +140,16 @@ public class Partie {
         }
     }
 
+    public int eventService(int nbService){
+        int[] lance = lancerDesDouble();
+        int total = lance[0] + lance[1];
+        if (nbService == 1){
+            return total*4;
+        }
+        else return total*10;
+
+    }
+
     public void casePropriete(Propriete propriete) throws InsufficientFundsException {
         Joueur joueurActuel = listeJoueurs[tourJoueur];
         if(joueurActuel.possedePropriete(propriete)){
@@ -152,7 +163,7 @@ public class Partie {
             }
             else{
                 // cas ou le joueur ne possede pas la propriete & la propriete n'a pas été achetée
-                joueurActuel.choixAchatPropriete(propriete);
+                acheter(propriete);
             }
         }
     }
@@ -261,7 +272,7 @@ public class Partie {
 
     public void allerPrison(){
         System.out.println("Vous allez directement en Prison ! \n Si vous passez par la case départ, vous ne recevez pas 200 $ !");
-        listeJoueurs[tourJoueur].setEstEnPrison(true);
+        listeJoueurs[tourJoueur].allerEnPrison(tourGolbal);
     }
 
     public void payerImpot(int total) throws InsufficientFundsException {
@@ -269,14 +280,13 @@ public class Partie {
     }
 
     public void incrTourJoueur() {
-        tourJoueur = (tourJoueur + 1) % nbJoueur; // retour a zero une fois que tous les joueurs ont joué
+        tourJoueur = (tourJoueur + 1) % nbJoueur;
+        if (tourJoueur == 0) incrTourGolbal();
     }
 
     public void incrTourGolbal() {
         tourGolbal = tourGolbal++;
     }
-
-
 
     public void reglerMontantLoyer(Joueur payeur, Joueur receveur, IPossession bien) throws InsufficientFundsException {
         switch(bien.getClass().getSimpleName()){
@@ -297,22 +307,6 @@ public class Partie {
                 break;
         }
     }
-
-
-    public int eventService(int nbService){
-        int[] lance = lancerDesDouble();
-        int total = lance[0] + lance[1];
-        if (nbService == 1){
-            return total*4;
-        }
-        else return total*10;
-
-    }
-
-
-
-
-
 
 
     // -------------------------------
@@ -350,107 +344,184 @@ public class Partie {
     }
 
 
-    // others
+    // -------------------------------
+    // ⚖️ Gestion entre Joueur
+    // -------------------------------
 
     public void debitJoueur(int total, Joueur donneur) throws InsufficientFundsException {
-        Map<Integer, Integer> somme;
-        for(Joueur joueur : listeJoueurs){
-            if(joueur != donneur){
-                somme = donneur.decrCapital(total);
+        int nbBeneficiaires = listeJoueurs.length - 1;
+        int part = total / nbBeneficiaires; // montant que chaque joueur reçoit
+
+        for (Joueur joueur : listeJoueurs) {
+            if (joueur != donneur) {
+                Map<Integer, Integer> somme = donneur.decrCapital(part);
                 joueur.incrCapital(somme);
             }
         }
     }
 
     public void creditJoueur(int total, Joueur receveur) throws InsufficientFundsException {
-        for(Joueur joueur : listeJoueurs){
-            if(joueur != receveur){
-                receveur.incrCapital(joueur.decrCapital(total));
+        for (Joueur joueur : listeJoueurs) {
+            if (joueur != receveur) {
+                Map<Integer, Integer> somme = joueur.decrCapital(total);
+                receveur.incrCapital(somme);
             }
         }
     }
 
-    public void hypothequer(Propriete propriete){
+    public void acheter(IPossession bienAVendre) throws InsufficientFundsException {
+        System.out.println("Souhaitez-vous acheter : " + bienAVendre.getNom() + " pour " + bienAVendre.getPrixAchat() + " ? (oui/non)");
+
+        if (traitementReponse(sc)) {
+            Joueur joueur = listeJoueurs[tourJoueur];
+            if (joueur.getCapitalTotal() >= bienAVendre.getPrixAchat()) {
+                joueur.decrCapital(bienAVendre.getPrixAchat());
+                listePossessionJoueur.put(bienAVendre, joueur);
+                System.out.println(joueur.getNom() + " a acheté " + bienAVendre.getNom() + " !");
+            } else {
+                System.out.println("Fonds insuffisants pour acheter " + bienAVendre.getNom());
+            }
+        }
+    }
+
+
+    public void vente(IPossession bienAVendre, Joueur acheteur, int prix) throws InsufficientFundsException {
+        Joueur vendeur = listePossessionJoueur.get(bienAVendre);
+
+        if (vendeur == null) {
+            System.out.println("Erreur : le bien n'appartient à aucun joueur.");
+            return;
+        }
+        if (vendeur == acheteur) {
+            System.out.println("Erreur : vous possédez déjà ce bien.");
+            return;
+        }
+
+        // Vérification fonds acheteur
+        if (acheteur.getCapitalTotal() < prix) {
+            throw new InsufficientFundsException("Fonds insuffisants pour acheter " + bienAVendre.getNom());
+        }
+
+        // Transaction
+        acheteur.decrCapital(prix);
+        vendeur.incrCapital(prix);
+
+        // Transfert de propriété
+        listePossessionJoueur.put(bienAVendre, acheteur);
+
+        System.out.println(acheteur.getNom() + " a acheté " + bienAVendre.getNom() +
+                " à " + vendeur.getNom() + " pour " + prix + "$.");
+    }
+
+    public void hypothequer(Propriete propriete) {
+        if (propriete.getEstHypothequee()) {
+            System.out.println("Cette propriété est déjà hypothéquée !");
+            return;
+        }
+
         propriete.setEstHypothequee(true);
-        listeJoueurs[tourJoueur].incrCapital(propriete.getPrixAchat()/2);
+        int total = propriete.getPrixAchat() / 2;
+        listeJoueurs[tourJoueur].incrCapital(total);
+
+        System.out.println("Votre propriété " + propriete.getNom() + " a été hypothéquée et vous rapporte "
+                + total + "$ !");
+    }
+
+    public int getPrixRemboursementHypotheque(Propriete propriete) {
+        return (int) (propriete.getPrixAchat() * 0.55);
     }
 
     public void rembourserHypotheque(Propriete propriete) throws InsufficientFundsException {
+        if (!propriete.getEstHypothequee()) {
+            System.out.println("Cette propriété n'est pas hypothéquée !");
+            return;
+        }
+
+        int remboursement = getPrixRemboursementHypotheque(propriete);
+
+        if (listeJoueurs[tourJoueur].getCapitalTotal() < remboursement) {
+            throw new InsufficientFundsException("Fonds insuffisants pour rembourser l'hypothèque !");
+        }
+
+        listeJoueurs[tourJoueur].decrCapital(remboursement);
         propriete.setEstHypothequee(false);
-        listeJoueurs[tourJoueur].decrCapital((int)(((double) propriete.getPrixAchat() /2)*1.1));
+
+        System.out.println("Vous avez remboursé l'hypothèque de " + propriete.getNom() +
+                " pour " + remboursement + "$. Elle vous appartient de nouveau pleinement !");
     }
 
     public void actionEnPrison() throws InsufficientFundsException {
-        Scanner scan = new Scanner(System.in);
-        String saisi;
-        if (carteChanceSortiPrisonEnJeu == listeJoueurs[tourJoueur] || carteCommunauteSortiPrisonEnJeu == listeJoueurs[tourJoueur]) {
-            do {
-                System.out.println("Souhaitez vous jouer votre carte pour être libéré de prison ?");
-                saisi = scan.nextLine();
-                saisi.toLowerCase();
-            } while (!(saisi.equals("oui") || saisi.equals("yes") || saisi.equals("ouais") || saisi.equals("non") || saisi.equals("no") || saisi.equals("nan")));
-            switch (saisi) {
-                case "oui", "ouais", "yes":
-                    // todo
-                    break;
-                case "non", "nan", "no":
-                    // todo
-                    break;
-            }
-        }
-        else{
-            System.out.println("Souhaitez vous payer 50$ pour sortir ?");
-            String action = scan.nextLine();
-            action.toLowerCase();
-            if (action.equals("oui") || action.equals("ouais") || action.equals("yes")) {
-                if (listeJoueurs[tourJoueur].getCapitalTotal() > 50) {
-                    listeJoueurs[tourJoueur].decrCapital(50);
-                }
-            } else {
-                System.out.println("Dans ce cas, testez votre chance aux dés !");
-                lancerDesDouble();
-            }
+        Joueur joueur = listeJoueurs[tourJoueur];
 
+        // Cas : libéré automatiquement après 3 tours
+        if (joueur.getNbTourEntrePrison() == tourGolbal + 3) {
+            joueur.setEstEnPrison(false);
+            System.out.println(joueur.getNom() + " est libéré après 3 tours.");
+            return;
+        }
+
+        // Cas : joueur possède une carte de sortie
+        if (carteChanceSortiPrisonEnJeu == joueur || carteCommunauteSortiPrisonEnJeu == joueur) {
+            System.out.println("Souhaitez-vous utiliser votre carte pour être libéré de prison ? (oui/non)");
+            if (traitementReponse(sc)) {
+                joueur.setEstEnPrison(false);
+                // remettre la carte dans la pioche si nécessaire
+                if (carteChanceSortiPrisonEnJeu == joueur) carteChanceSortiPrisonEnJeu = null;
+                if (carteCommunauteSortiPrisonEnJeu == joueur) carteCommunauteSortiPrisonEnJeu = null;
+                System.out.println(joueur.getNom() + " utilise sa carte et sort de prison !");
+            } else {
+                proposerPaiementOuDes(joueur);
+            }
+        } else {
+            proposerPaiementOuDes(joueur);
         }
     }
 
-    public void avancer(String destination){
+    private void proposerPaiementOuDes(Joueur joueur) throws InsufficientFundsException {
+        System.out.println("Souhaitez-vous payer 50$ pour sortir ? (oui/non)");
+        if (traitementReponse(sc)) {
+            if (joueur.getCapitalTotal() >= 50) {
+                joueur.decrCapital(50);
+                joueur.setEstEnPrison(false);
+                System.out.println(joueur.getNom() + " paye 50$ et sort de prison.");
+            } else {
+                throw new InsufficientFundsException("Fonds insuffisants pour payer la sortie de prison !");
+            }
+        } else {
+            System.out.println("Vous tentez votre chance en lançant les dés...");
+            int[] resultat = lancerDesDouble();
+            if (resultat[0] == resultat[1]) {
+                joueur.setEstEnPrison(false);
+                System.out.println(joueur.getNom() + " a fait un double et sort de prison !");
+            } else {
+                System.out.println(joueur.getNom() + " n'a pas fait de double, il reste en prison.");
+            }
+        }
+    }
+
+    public boolean traitementReponse(Scanner sc) {
+        while (true) {
+            String saisi = sc.nextLine().trim().toLowerCase();
+            if (saisi.equals("oui") || saisi.equals("ouais") || saisi.equals("yes")) {
+                return true;
+            } else if (saisi.equals("non") || saisi.equals("nan") || saisi.equals("no")) {
+                return false;
+            } else {
+                System.out.println("Erreur de saisie. Veuillez répondre par oui/non.");
+            }
+        }
+    }
+
+    public void avancer(String destination) {
         int caseActuelle = listeJoueurs[tourJoueur].getCaseActuelle();
         List<ICase> cases = plateau.getTotalCase();
-        for (int i = caseActuelle; i < cases.size(); i++){
-            if (cases.get(i).getNom().equals(destination)){
+        for (int i = caseActuelle; i < cases.size(); i++) {
+            if (cases.get(i).getNom().equals(destination)) {
                 listeJoueurs[tourJoueur].avancer(i - caseActuelle);
                 return;
             }
         }
     }
-
-
-    public void acheter(IPossession bienAVendre) throws InsufficientFundsException {
-        if(listeJoueurs[tourJoueur].getCaseActuelle() > bienAVendre.getPrixAchat()){
-            listeJoueurs[tourJoueur].decrCapital(bienAVendre.getPrixAchat());
-            listePossessionJoueur.put(bienAVendre,listeJoueurs[tourJoueur]);
-        }
-        else{
-            System.out.println("Fond insuffisant");
-        }
-    }
-
-    public void vente(IPossession bienAVendre) throws InsufficientFundsException {
-        // todo
-    }
-
-
-
-
-
-
-
-
-
-
-
-
 
     // -------------------------------
     // 🕹️ Gestion de la Partie
