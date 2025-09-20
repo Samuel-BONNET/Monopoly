@@ -1,36 +1,43 @@
 package com.monopoly.Monopoly.models.plateau;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.monopoly.Monopoly.models.Joueur;
 
 public class Propriete implements IPossession {
 
-    private static int compteur_id = 0;
-    private int id, prix_achat, loyer, loyerGroupeComplet, loyer_maison1, loyer_maison2, loyer_maison3, loyer_maison4, loyer_hotel, prix_maison, prix_hotel, nb_maisons, nb_hotel;
+    private static int compteurId = 0;
+    @JsonProperty
+    private int id, numero, prixAchat, loyer, loyerGroupeComplet, loyerHotel, prixMaison, prixHotel;
+    @JsonProperty
+    private int[]loyerMaison;
+
+    private int nbMaisons, nbHotel;
     private String nom, quartier;
     private Joueur proprietaire;
     private boolean estHypothequee,estGroupeComplet,estHotel;
 
-    public Propriete(int id, int prix_achat, int loyer, int loyerGroupeComplet, int loyer_maison1, int loyer_maison2, int loyer_maison3, int loyer_maison4, int loyer_hotel, int prix_maison, int prix_hotel, String nom, String quartier){
+    public Propriete(int id, int prixAchat, int loyer, int loyerGroupeComplet, int[] loyerMaison, int loyerHotel, int prixMaison, int prixHotel, String nom, String quartier){
         this.id = id;
-        this.prix_achat = prix_achat;
+        this.prixAchat = prixAchat;
         this.loyer = loyer;
-        this.loyer_maison1 = loyer_maison1;
-        this.loyer_maison2 = loyer_maison2;
-        this.loyer_maison3 = loyer_maison3;
-        this.loyer_maison4 = loyer_maison4;
-        this.loyer_hotel = loyer_hotel;
-        this.prix_maison = prix_maison;
-        this.prix_hotel = prix_hotel;
+        this.loyerMaison = loyerMaison;
+        this.loyerHotel = loyerHotel;
+        this.prixMaison = prixMaison;
+        this.prixHotel = prixHotel;
         this.nom = nom;
         this.quartier = quartier;
-        this.nb_maisons = 0;
+        this.nbMaisons = 0;
         this.loyerGroupeComplet = loyerGroupeComplet;
         this.estGroupeComplet = false;
         this.estHotel = false;
     }
 
-    public Propriete( int prix_achat, int loyer, int loyerGroupeComplet, int maison1, int maison2, int maison3, int maison4, int hotel, int prix_maison, int prix_hotel, String nom, String quartier){
-        this(compteur_id++, prix_achat, loyer, loyerGroupeComplet, maison1, maison2, maison3, maison4, hotel, prix_maison, prix_hotel, nom, quartier);
+    public Propriete( int prixAchat, int loyer, int loyerGroupeComplet, int[] loyerMaison, int hotel, int prixMaison, int prixHotel, String nom, String quartier){
+        this(compteurId++, prixAchat, loyer, loyerGroupeComplet, loyerMaison, hotel, prixMaison, prixHotel, nom, quartier);
+    }
+
+    public Propriete(){
+        // Pour Jackson
     }
 
     // -------------------------------
@@ -41,56 +48,48 @@ public class Propriete implements IPossession {
         return id;
     }
 
+    public int getNumero() {
+        return numero;
+    }
+
     public int getPrixAchat() {
-        return prix_achat;
+        return prixAchat;
     }
 
     public int getLoyer() {
         return loyer;
     }
 
-    public int getLoyer_maison1() {
-        return loyer_maison1;
-    }
-
-    public int getLoyer_maison2() {
-        return loyer_maison2;
-    }
-
-    public int getLoyer_maison3() {
-        return loyer_maison3;
-    }
-
-    public int getLoyer_maison4() {
-        return loyer_maison4;
+    public int[] loyerMaison() {
+        return loyerMaison;
     }
 
     public int getLoyer_hotel() {
-        return loyer_hotel;
+        return loyerHotel;
     }
 
     public int getPrix_maison() {
-        return prix_maison;
+        return prixMaison;
     }
 
     public int getPrix_hotel() {
-        return prix_hotel;
+        return prixHotel;
     }
 
     public int getNb_maisons() {
-        return nb_maisons;
+        return nbMaisons;
     }
 
-    public void setNb_maisons(int nb_maisons) {
-        this.nb_maisons = nb_maisons;
+    public void setNb_maisons(int nbMaisons) {
+        this.nbMaisons = nbMaisons;
     }
 
     public int getNb_hotel() {
-        return nb_hotel;
+        return nbHotel;
     }
 
-    public void setNb_hotel(int nb_hotel) {
-        this.nb_hotel = nb_hotel;
+    public void setNb_hotel(int nbHotel) {
+        this.nbHotel = nbHotel;
     }
 
     public String getNom() {
@@ -139,20 +138,20 @@ public class Propriete implements IPossession {
     public int calculerLoyer(){
         // Si hotel
         if(estHotel){
-            return loyer_hotel;
+            return loyerHotel;
         }
         else{
             // Si maison
-            if(nb_maisons > 0){
-                switch (nb_maisons) {
+            if(nbMaisons > 0){
+                switch (nbMaisons) {
                     case 1:
-                        return loyer_maison1;
+                        return loyerMaison[0];
                     case 2:
-                        return loyer_maison2;
+                        return loyerMaison[1];
                     case 3:
-                        return loyer_maison3;
+                        return loyerMaison[2];
                     case 4:
-                        return loyer_maison4;
+                        return loyerMaison[3];
                     default:
                         return loyer; // au cas où
                 }

@@ -1,8 +1,12 @@
 package com.monopoly.Monopoly.models.plateau;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class CaseEvenement implements ICase{
 
-    private int id;
+    @JsonProperty
+    private int id, numero;
+    @JsonProperty
     private String nom;
     private boolean estHypotheque = false;
 
@@ -11,12 +15,20 @@ public class CaseEvenement implements ICase{
         this.nom = nom;
     }
 
+    CaseEvenement(){
+        // Pour Jackson
+    }
+
     // -------------------------------
     // 🔧 Getters / Setters
     // -------------------------------
 
     public int getId() {
         return id;
+    }
+
+    public int getNumero() {
+        return numero;
     }
 
     public String getNom() {

@@ -3,7 +3,7 @@ package com.monopoly.Monopoly.models.plateau;
 public class ServicePublic implements IPossession {
 
     private static int compteur = 0;
-    private int id, prix;
+    private int id, numero, prix;
     private String nom;
 
     ServicePublic(int id, String nom) {
@@ -22,6 +22,10 @@ public class ServicePublic implements IPossession {
 
     public int getId() {
         return id;
+    }
+
+    public int getNumero() {
+        return numero;
     }
 
     public String getNom() {

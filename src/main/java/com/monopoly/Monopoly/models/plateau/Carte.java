@@ -22,6 +22,10 @@ public class Carte {
         this(compteur++, typeCarte, description, aFaire);
     }
 
+    Carte(){
+        // Pour Jackson
+    }
+
     // -------------------------------
     // 🔧 Getters / Setters
     // -------------------------------

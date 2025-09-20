@@ -40,6 +40,12 @@ public class Joueur {
         this(compteur_id++, nom, pion);
     }
 
+    public Joueur(){
+        this(compteur_id++, "", "");
+    }
+
+
+
     // -------------------------------
     // 🔧 Getters / Setters
     // -------------------------------
@@ -56,7 +62,7 @@ public class Joueur {
         return nom;
     }
 
-    public String getPiece() {
+    public String getPion() {
         return pion;
     }
 

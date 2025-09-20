@@ -28,4 +28,5 @@ public interface ICase {
 
     public int getId();
     public String getNom();
+    public int getNumero();
 }

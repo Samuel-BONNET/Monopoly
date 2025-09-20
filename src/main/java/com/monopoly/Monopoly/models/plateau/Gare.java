@@ -1,10 +1,16 @@
 package com.monopoly.Monopoly.models.plateau;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Gare implements IPossession {
-    private static int compteur = 0;
-    private int id, prix;
+
+    @JsonProperty
+    private int id, numero;
+    @JsonProperty
     private String nom;
+    private static int compteur = 0;
     private boolean estHypotheque = false;
+    private int prix;
 
     Gare(int id, String nom) {
         this.id = id;
@@ -22,6 +28,10 @@ public class Gare implements IPossession {
 
     public int getId() {
         return id;
+    }
+
+    public int getNumero() {
+        return numero;
     }
 
     public String getNom() {

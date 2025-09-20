@@ -18,11 +18,16 @@ public class Partie {
     private Plateau plateau;
     private List<Carte> listeChance;
     private List<Carte> listeCaisseCommunaute;
-    private Map<IPossession, Joueur> listePossessionJoueur;
+    private Map<IPossession, Joueur> listePossessionJoueur = new HashMap<>();
     private static final Map<Integer,Integer> SommeDepart = Map.of(100,2);
 
-    Partie(int nbJoueur) {
+    public Partie(int nbJoueur) {
+        plateau = new Plateau();
         this.nbJoueur = nbJoueur;
+        listeJoueurs = new Joueur[nbJoueur];
+        for(int i = 0; i < nbJoueur; i++) {
+            listeJoueurs[i] = new Joueur();
+        }
     }
 
     // -------------------------------
@@ -41,6 +46,10 @@ public class Partie {
         return tourGolbal;
     }
 
+    public Plateau getPlateau() {
+        return plateau;
+    }
+
     public List<Carte> getChance(){
         return listeChance;
     }
@@ -48,6 +57,54 @@ public class Partie {
     public List<Carte> getCaisseCommunaute(){
         return listeCaisseCommunaute;
     }
+
+    public Joueur[] getListeJoueurs() {
+        return this.listeJoueurs;
+    }
+
+    public List<Map<String, Object>> getListeJoueursInfo() {
+        List<Map<String, Object>> joueursInfo = new ArrayList<>();
+
+        for (Joueur j : listeJoueurs) {
+            if (j == null) continue; // sécurité si tableau pas complètement rempli
+            Map<String, Object> info = new HashMap<>();
+            info.put("nom", j.getNom());
+            info.put("pion", j.getPion());
+            info.put("capital", j.getCapitalTotal());
+            info.put("caseActuelle", j.getCaseActuelle());
+            info.put("estEnPrison", j.getEstEnPrison());
+            info.put("estEliminer", j.getEstEliminer());
+            info.put("nbGare", j.getNbGare());
+            info.put("nbService", j.getNbService());
+            joueursInfo.add(info);
+        }
+
+        return joueursInfo;
+    }
+
+    public List<Map<String, Object>> getPlateauInfo() {
+        List<Map<String, Object>> plateauInfo = new ArrayList<>();
+
+        for (ICase c : plateau.getTotalCase()) {
+            Map<String, Object> info = new HashMap<>();
+            info.put("nom", c.getNom());
+            info.put("id", c.getId());
+            info.put("type", c.getClass().getSimpleName()); // Propriete, CaseEvenement, Gare, ServicePublic, etc.
+
+            // si c'est une propriété ou un bien possédé
+            if (c instanceof IPossession poss) {
+                Joueur proprietaire = listePossessionJoueur.get(poss);
+                info.put("proprietaire", proprietaire != null ? proprietaire.getNom() : null);
+                info.put("prixAchat", poss.getPrixAchat());
+                info.put("estHypothequee", poss instanceof Propriete p ? p.getEstHypothequee() : null);
+            }
+
+            plateauInfo.add(info);
+        }
+
+        return plateauInfo;
+    }
+
 
     // -------------------------------
     // ⚙️ Mise en place Début de Partie
@@ -537,7 +594,6 @@ public class Partie {
     }
 
     public void play() throws InsufficientFundsException {
-        plateau = new Plateau();
         chargerCarte();
         affichageStart();
         setUpJoueur();
