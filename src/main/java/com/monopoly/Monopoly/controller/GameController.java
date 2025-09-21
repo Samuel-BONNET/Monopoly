@@ -26,7 +26,7 @@ public class GameController {
     }
 
     @PostMapping("/roll")
-    public Map<String, Object> rollDice() {
+    public int rollDice() {
         return gameService.rollDice();
     }
 
@@ -49,6 +49,13 @@ public class GameController {
     public List<Joueur> getJoueurs() {
         return gameService.getJoueurs();
     }
+
+    @GetMapping("/tourJoueur")
+    public int getTourJoueur() {
+        return gameService.getTourJoueur();
+    }
+
+
 
     @PostMapping("/deplacer/{joueurIndex}/{nbCases}")
     public void deplacerJoueur(@PathVariable int joueurIndex, @PathVariable int nbCases) {

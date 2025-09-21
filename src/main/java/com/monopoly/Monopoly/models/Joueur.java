@@ -437,6 +437,6 @@ public class Joueur {
     }
 
     public void avancer(int nbCase){
-        caseActuelle = (caseActuelle + nbCase) % 40;
+        this.caseActuelle = (this.caseActuelle + nbCase) % 40;
     }
 }

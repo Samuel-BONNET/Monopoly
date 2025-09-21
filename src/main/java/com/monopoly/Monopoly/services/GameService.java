@@ -38,17 +38,10 @@ public class GameService {
         return state;
     }
 
-    public Map<String, Object> rollDice() {
-        int[] des = partie.lancerDesDouble();
-
-        partie.getListeJoueurs()[partie.getTourJoueur()].avancer(des[0] + des[1]);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("de1", des[0]);
-        result.put("de2", des[1]);
-        result.put("nouvellePosition", partie.getListeJoueurs()[partie.getTourJoueur()].getCaseActuelle());
-
-        return result;
+    public int rollDice() {
+        int total = partie.lancerDesSimple() + partie.lancerDesSimple();
+        partie.getListeJoueurs()[partie.getTourJoueur()].avancer(total);
+        return total;
     }
 
     public Map<String, Object> endTurn() {
@@ -75,6 +68,10 @@ public class GameService {
 
     public List<Joueur> getJoueurs() {
         return joueurs;
+    }
+
+    public int getTourJoueur(){
+        return partie.getTourJoueur();
     }
 
     public void deplacerJoueur(int joueurIndex, int nbCases){

@@ -81,10 +81,6 @@ function getCasePosition(numCase) {
     return { x, y };
 }
 
-
-
-
-
 function drawPions() {
     document.querySelectorAll(".pion").forEach(e => e.remove());
 
@@ -101,10 +97,28 @@ function drawPions() {
 
 // Lancer dés
 document.getElementById("rollBtn").addEventListener("click", async () => {
-    const nb = Math.floor(Math.random() * 6 + 1);
-    await fetch(`/api/deplacer/0/${nb}`, { method: 'POST' }); // joueur 0
-    await loadJoueurs();
+    try {
+        // 1️⃣ Lancer les dés côté serveur
+        const res = await fetch("/api/roll", { method: "POST" });
+        const nb = await res.json(); // ici nb est directement l'entier renvoyé
+
+        console.log("Nombre de cases depuis Java :", nb);
+
+        // 2️⃣ Récupérer le joueur courant depuis serveur
+        const resTour = await fetch("/api/tourJoueur"); // suppose que tu exposes cet endpoint
+        const tourJoueur = await resTour.json(); // un entier
+
+        // 3️⃣ Déplacer le joueur
+        await fetch(`/api/deplacer/${tourJoueur}/${nb}`, { method: 'POST' });
+
+        // 4️⃣ Recharger les positions des pions
+        await loadJoueurs();
+
+    } catch (err) {
+        console.error("Erreur lors du lancer de dés :", err);
+    }
 });
+
 
 loadPlateau();
 loadJoueurs();
