@@ -573,6 +573,9 @@ public class Partie {
         int caseActuelle = listeJoueurs[tourJoueur].getCaseActuelle();
         List<ICase> cases = plateau.getTotalCase();
         for (int i = caseActuelle; i < cases.size(); i++) {
+            if (cases.get(i).getNom().equals("Depart")){
+                caseDepart();
+            }
             if (cases.get(i).getNom().equals(destination)) {
                 listeJoueurs[tourJoueur].avancer(i - caseActuelle);
                 return;

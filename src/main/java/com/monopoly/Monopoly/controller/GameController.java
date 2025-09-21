@@ -1,14 +1,19 @@
 package com.monopoly.Monopoly.controller;
 
+import com.monopoly.Monopoly.models.Joueur;
+import com.monopoly.Monopoly.models.plateau.Plateau;
 import com.monopoly.Monopoly.services.GameService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/game")
+@RequestMapping("/api")
 public class GameController {
 
+    @Autowired
     private final GameService gameService;
 
     public GameController(GameService gameService) {
@@ -33,5 +38,20 @@ public class GameController {
     @PostMapping("/buy/{id}")
     public String buyProperty(@PathVariable int id) {
         return gameService.buyProperty(id);
+    }
+
+    @GetMapping("/plateau")
+    public Plateau getPlateau() {
+        return gameService.getPlateau();
+    }
+
+    @GetMapping("/joueurs")
+    public List<Joueur> getJoueurs() {
+        return gameService.getJoueurs();
+    }
+
+    @PostMapping("/deplacer/{joueurIndex}/{nbCases}")
+    public void deplacerJoueur(@PathVariable int joueurIndex, @PathVariable int nbCases) {
+        gameService.deplacerJoueur(joueurIndex, nbCases);
     }
 }
