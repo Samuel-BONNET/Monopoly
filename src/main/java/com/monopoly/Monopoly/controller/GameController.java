@@ -30,9 +30,10 @@ public class GameController {
         return gameService.rollDice();
     }
 
-    @PostMapping("/end-turn")
-    public Map<String, Object> endTurn() {
-        return gameService.endTurn();
+    @PostMapping("/finTour")
+    public Joueur finTour() {
+        Joueur joueur = gameService.finTour();
+        return joueur;
     }
 
     @PostMapping("/buy/{id}")
@@ -46,7 +47,7 @@ public class GameController {
     }
 
     @GetMapping("/joueurs")
-    public List<Joueur> getJoueurs() {
+    public Joueur[] getJoueurs() {
         return gameService.getJoueurs();
     }
 
@@ -54,8 +55,6 @@ public class GameController {
     public int getTourJoueur() {
         return gameService.getTourJoueur();
     }
-
-
 
     @PostMapping("/deplacer/{joueurIndex}/{nbCases}")
     public void deplacerJoueur(@PathVariable int joueurIndex, @PathVariable int nbCases) {

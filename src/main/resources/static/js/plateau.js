@@ -98,20 +98,17 @@ function drawPions() {
 // Lancer dés
 document.getElementById("rollBtn").addEventListener("click", async () => {
     try {
-        // 1️⃣ Lancer les dés côté serveur
+
         const res = await fetch("/api/roll", { method: "POST" });
-        const nb = await res.json(); // ici nb est directement l'entier renvoyé
+        const nb = await res.json();
 
         console.log("Nombre de cases depuis Java :", nb);
 
-        // 2️⃣ Récupérer le joueur courant depuis serveur
-        const resTour = await fetch("/api/tourJoueur"); // suppose que tu exposes cet endpoint
-        const tourJoueur = await resTour.json(); // un entier
+        const resTour = await fetch("/api/tourJoueur");
+        const tourJoueur = await resTour.json();
 
-        // 3️⃣ Déplacer le joueur
         await fetch(`/api/deplacer/${tourJoueur}/${nb}`, { method: 'POST' });
 
-        // 4️⃣ Recharger les positions des pions
         await loadJoueurs();
 
     } catch (err) {
@@ -119,6 +116,26 @@ document.getElementById("rollBtn").addEventListener("click", async () => {
     }
 });
 
+// Fin de tour
+document.getElementById("endTurnBtn").addEventListener("click", async() => {
+    try{
+        const res = await fetch("/api/finTour", { method: "POST" });
+
+        if (!res.ok) {
+            throw new Error(`Erreur serveur : ${res.status}`);
+        }
+        const joueurCourant = await res.json();
+        console.log("Nouveau joueur :", joueurCourant.nom);
+
+        await loadJoueurs();
+
+        document.getElementById("currentPlayer").textContent =
+            `C'est au tour de ${joueurCourant.nom}`;
+
+    } catch(err){
+        console.error("Erreur lors de la fin de tour :", err);
+    }
+})
 
 loadPlateau();
 loadJoueurs();

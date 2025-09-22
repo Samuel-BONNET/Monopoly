@@ -18,14 +18,20 @@ public class GameService {
     private Plateau plateau = new Plateau();
     private List<Joueur> joueurs = List.of(
             new Joueur("Alice", "♙"),
-            new Joueur("Bob", "♕")
+            new Joueur("Bob", "♕"),
+            new Joueur("Charlie", "♠"),
+            new Joueur("Dylan", "♥")
     );
 
 
 
     public GameService() {
-        this.partie = new Partie(2);
+        this.partie = new Partie(4);
         this.partie.getPlateau();
+        partie.creationJoueur(1,"Alice","♙");
+        partie.creationJoueur(2,"Bob","♕");
+        partie.creationJoueur(3,"Charlie","♠");
+        partie.creationJoueur(4,"Dylan","♥");
     }
 
     public Map<String, Object> getState() {
@@ -39,17 +45,18 @@ public class GameService {
     }
 
     public int rollDice() {
-        int total = partie.lancerDesSimple() + partie.lancerDesSimple();
-        partie.getListeJoueurs()[partie.getTourJoueur()].avancer(total);
+        int des1 = partie.lancerDesSimple();
+        int des2 = partie.lancerDesSimple();
+        int total = des1 + des2;
+
+        if (des1 == des2) partie.getJoueurAJouer().incrCptDouble(partie.getTourGolbal());
+        partie.getJoueurAJouer().avancer(total);
         return total;
     }
 
-    public Map<String, Object> endTurn() {
+    public Joueur finTour() {
         partie.incrTourJoueur();
-        Map<String, Object> result = new HashMap<>();
-        result.put("tourJoueur", partie.getTourJoueur());
-        result.put("tourGlobal", partie.getTourGolbal());
-        return result;
+        return partie.getJoueurAJouer();
     }
 
     public String buyProperty(int id) {
@@ -66,12 +73,16 @@ public class GameService {
         return partie.getPlateau();
     }
 
-    public List<Joueur> getJoueurs() {
-        return joueurs;
+    public Joueur[] getJoueurs() {
+        return partie.getListeJoueurs();
     }
 
     public int getTourJoueur(){
         return partie.getTourJoueur();
+    }
+
+    public Joueur getJoueurAJouer(){
+        return joueurs.get(getTourJoueur());
     }
 
     public void deplacerJoueur(int joueurIndex, int nbCases){

@@ -25,9 +25,6 @@ public class Partie {
         plateau = new Plateau();
         this.nbJoueur = nbJoueur;
         listeJoueurs = new Joueur[nbJoueur];
-        for(int i = 0; i < nbJoueur; i++) {
-            listeJoueurs[i] = new Joueur();
-        }
     }
 
     // -------------------------------
@@ -404,6 +401,14 @@ public class Partie {
     // -------------------------------
     // ⚖️ Gestion entre Joueur
     // -------------------------------
+
+    public void creationJoueur(int numeroJoueur,String nomJoueur, String pion){
+        listeJoueurs[numeroJoueur-1] = new Joueur(nomJoueur,pion);
+    }
+
+    public Joueur getJoueurAJouer(){
+        return listeJoueurs[tourJoueur];
+    }
 
     public void debitJoueur(int total, Joueur donneur) throws InsufficientFundsException {
         int nbBeneficiaires = listeJoueurs.length - 1;
