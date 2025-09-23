@@ -67,7 +67,7 @@ public class Joueur {
     }
 
     public int getCaseActuelle() {
-        return caseActuelle;
+        return this.caseActuelle;
     }
 
     public void setCaseActuelle(int caseActuelle) {
@@ -450,5 +450,6 @@ public class Joueur {
 
     public void avancer(int nbCase){
         this.caseActuelle = (this.caseActuelle + nbCase) % 40;
+        System.out.println(caseActuelle + ""+(caseActuelle + nbCase)%40);
     }
 }

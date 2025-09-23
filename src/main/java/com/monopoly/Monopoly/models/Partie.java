@@ -31,6 +31,18 @@ public class Partie {
     // 🔧 Getters / Setters
     // -------------------------------
 
+    public Joueur getJoueur(int id){
+        return listeJoueurs[id%nbJoueur];
+    }
+
+    public Joueur getJoueur(Joueur joueur){
+        return listeJoueurs[joueur.getId()];
+    }
+
+    public int getPositionJoueur(int id){
+        return listeJoueurs[id].getCaseActuelle();
+    }
+
     public int getNbJoueur() {
         return nbJoueur;
     }

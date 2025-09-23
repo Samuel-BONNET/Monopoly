@@ -1,6 +1,8 @@
 package com.monopoly.Monopoly.controller;
 
 import com.monopoly.Monopoly.models.Joueur;
+import com.monopoly.Monopoly.models.plateau.ICase;
+import com.monopoly.Monopoly.models.plateau.IPossession;
 import com.monopoly.Monopoly.models.plateau.Plateau;
 import com.monopoly.Monopoly.services.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,14 +48,43 @@ public class GameController {
         return gameService.getPlateau();
     }
 
+    @GetMapping("/plateau/{id}")
+    public ICase getPlateauId(@PathVariable int id) {
+        return gameService.getPlateauId(id);
+    }
+
     @GetMapping("/joueurs")
     public Joueur[] getJoueurs() {
         return gameService.getJoueurs();
     }
 
+    @GetMapping("/joueurs/{id}")
+    public int getJoueur(@PathVariable int id) {
+        return gameService.getJoueur(id);
+    }
+
+    @GetMapping("/caseJoueur")
+    public int getCaseJoueur() {
+        return gameService.getCaseJoueur(getJoueurAjouer());
+    }
+
+    @GetMapping("/estPropriete/{id}")
+    public boolean estPropriete(@PathVariable int id) {
+        return gameService.estPropriete(id);
+    }
+
     @GetMapping("/tourJoueur")
     public int getTourJoueur() {
         return gameService.getTourJoueur();
+    }
+    @GetMapping("/joueurAJouer")
+    public Joueur getJoueurAjouer() {
+        return gameService.getJoueurAJouer();
+    }
+
+    @GetMapping("/caseActuelle")
+    public int getCaseActuelle(){
+        return gameService.getJoueurAJouer().getCaseActuelle();
     }
 
     @PostMapping("/deplacer/{joueurIndex}/{nbCases}")

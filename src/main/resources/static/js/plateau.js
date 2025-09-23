@@ -124,6 +124,7 @@ document.getElementById("endTurnBtn").addEventListener("click", async() => {
         if (!res.ok) {
             throw new Error(`Erreur serveur : ${res.status}`);
         }
+
         const joueurCourant = await res.json();
         console.log("Nouveau joueur :", joueurCourant.nom);
 
@@ -136,6 +137,52 @@ document.getElementById("endTurnBtn").addEventListener("click", async() => {
         console.error("Erreur lors de la fin de tour :", err);
     }
 })
+
+document.getElementById("achatBtn").addEventListener("click", async () => {
+    try {
+
+        const jRes = await fetch("/api/joueurAJouer", { method: "GET" });
+        if (!jRes.ok) throw new Error("Impossible de récupérer le joueur actuel");
+        const joueur = await jRes.json()
+
+
+        const nomJoueur = joueur.nom || "Joueur inconnu";
+        const caseActu = joueur.caseActuelle;
+        console.log(`Joueur actuel : ${nomJoueur} (case ${caseActu})`);
+
+
+        const verifProprieteRes = await fetch(`/api/estPropriete/${caseActu}`, { method: "GET" });
+        if (!verifProprieteRes.ok) throw new Error("Erreur serveur pour la vérification de la propriété");
+        const estPropriete = await verifProprieteRes.json();
+
+        if (!estPropriete) {
+            console.warn("La case actuelle n'est pas une propriété achetable");
+            return;
+        }
+
+        console.info("La case actuelle est une propriété achetable");
+
+        const pRes = await fetch(`/api/plateau/${caseActu}`);
+        if (!pRes.ok) throw new Error("Impossible de récupérer la propriété actuelle");
+        const propriete = await pRes.json();
+        const nomPropriete = propriete.nom ?? propriete.name ?? "Propriété inconnue";
+
+        const buyRes = await fetch(`/api/buy/${caseActu}`, { method: "POST" });
+        if (!buyRes.ok) throw new Error(`Erreur serveur lors de l'achat : ${buyRes.status}`);
+
+        console.log(`${nomJoueur} a acheté la propriété ${nomPropriete}`);
+
+        document.getElementById("message").textContent = `${nomJoueur} a acheté la propriété : ${nomPropriete}`;
+        document.getElementById("message").classList.add("success");
+
+        await loadJoueurs();
+
+    } catch (err) {
+        console.error("Erreur lors de l'achat :", err);
+    }
+});
+
+
 
 loadPlateau();
 loadJoueurs();

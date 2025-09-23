@@ -2,6 +2,8 @@ package com.monopoly.Monopoly.services;
 
 import com.monopoly.Monopoly.models.Joueur;
 import com.monopoly.Monopoly.models.Partie;
+import com.monopoly.Monopoly.models.plateau.ICase;
+import com.monopoly.Monopoly.models.plateau.IPossession;
 import com.monopoly.Monopoly.models.plateau.Plateau;
 import com.monopoly.Monopoly.models.plateau.Propriete;
 import org.springframework.stereotype.Service;
@@ -73,12 +75,25 @@ public class GameService {
         return partie.getPlateau();
     }
 
+    public ICase getPlateauId(int id) {
+        return partie.getPlateau().getTotalCase().get(id);
+    }
+
+    public int getCaseJoueur(Joueur joueur) {
+        Joueur j = partie.getJoueur(joueur);
+        return j.getCaseActuelle();
+    }
+
     public Joueur[] getJoueurs() {
         return partie.getListeJoueurs();
     }
 
     public int getTourJoueur(){
         return partie.getTourJoueur();
+    }
+
+    public int getJoueur(int id){
+        return partie.getPositionJoueur(id);
     }
 
     public Joueur getJoueurAJouer(){
@@ -90,4 +105,7 @@ public class GameService {
         j.setCaseActuelle((j.getCaseActuelle() + nbCases) % 40);
     }
 
+    public boolean estPropriete(int caseActuelle) {
+        return partie.getPlateau().getTotalCase().get(caseActuelle) instanceof IPossession;
+    }
 }
