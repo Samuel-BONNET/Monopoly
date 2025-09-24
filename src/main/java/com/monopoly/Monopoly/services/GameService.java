@@ -63,11 +63,11 @@ public class GameService {
 
     public String buyProperty(int id) {
         try {
-            Propriete propriete = (Propriete) partie.getPlateau().getTotalCase().get(id);
+            Propriete propriete = (Propriete) partie.getPlateau().getCase(id);
             partie.acheter(propriete);
             return "Propriété " + propriete.getNom() + " achetée !";
         } catch (Exception e) {
-            return "Erreur : " + e.getMessage();
+            return "Erreur lors de l'achat : " + e.getMessage();
         }
     }
 

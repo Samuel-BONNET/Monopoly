@@ -2,63 +2,72 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Monopoly Web - Prototype Plateau</title>
+    <title>Monopoly Web - Accueil</title>
     <style>
-        body { font-family: sans-serif; display:flex; flex-direction: column; align-items:center; margin:20px; }
-        #board {
-            position: relative;
-            width: 660px;
-            height: 660px;
-            margin: 20px;
-            border: 2px solid #000;
-            /*background-image: url("https://www.regledujeu.fr/wp-content/uploads/monopoly-plateau.png");
-            background-size: cover;
-            background-position: center;
-            */
-        }
-
-        .case {
-            width: 60px;
-            height: 60px;
-            border: 1px solid #000;
-            position: absolute;   /* tu gardes absolute pour placer les cases autour du carré */
+        body {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            background: linear-gradient(135deg, #ffcc00, #ff9900);
+            color: #333;
             text-align: center;
-            font-size: 10px;       /* réduire pour les noms longs */
-            overflow: hidden;
-            word-wrap: break-word;
         }
 
-        .case[data-corner] { background-color: #eee; }
-
-        .pion {
-            position: absolute;
-            font-size: 18px;
-            top: 5px;
-            left: 5px;
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
         }
-        #controls { margin-top:20px; display:flex; gap:10px; }
+
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background-color: #222;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #444;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
 
-<h2>Prototype Plateau Monopoly</h2>
+<h1>Monopoly Web</h1>
+<p>Bienvenue dans votre partie en ligne !</p>
 
-<div id="board"></div>
+<button id="startGameBtn" class="btn">Démarrer la partie</button>
 
-<div id="currentPlayer" style="margin-top: 10px; font-weight: bold; font-size: 1.2rem;"></div>
-
-<div id="message">message user</div>
-
-<div id="controls">
-    <button id="rollBtn">Lancer Dés</button>
-    <button id="endTurnBtn">Fin de Tour</button>
-    <button id="achatBtn">Acheter</button>
-</div>
-
-<script src="/js/plateau.js"></script>
+<script>
+    // Au clic, on redirige vers le jeux (plateau)
+    document.getElementById("startGameBtn").addEventListener("click", () => {
+        // Vérifie que la partie est prête avant de lancer (optionnel)
+        fetch("/api/state")
+            .then(res => res.json())
+            .then(state => {
+                console.log("État du jeu :", state);
+                // Ici, tu peux vérifier si des joueurs sont initialisés avant de partir
+                window.location.href = "/Game.html";
+            })
+            .catch(err => {
+                console.error("Impossible de charger l'état du jeu :", err);
+                window.location.href = "/Game.html"; // fallback
+            });
+    });
+</script>
 
 </body>
 </html>

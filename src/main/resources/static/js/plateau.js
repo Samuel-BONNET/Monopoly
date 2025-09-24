@@ -138,19 +138,20 @@ document.getElementById("endTurnBtn").addEventListener("click", async() => {
     }
 })
 
+// Achat
 document.getElementById("achatBtn").addEventListener("click", async () => {
     try {
-
+        // Recupérer le joueur qui doit jouer
         const jRes = await fetch("/api/joueurAJouer", { method: "GET" });
         if (!jRes.ok) throw new Error("Impossible de récupérer le joueur actuel");
         const joueur = await jRes.json()
 
-
+        // Recupérer nom & case du joueur
         const nomJoueur = joueur.nom || "Joueur inconnu";
         const caseActu = joueur.caseActuelle;
         console.log(`Joueur actuel : ${nomJoueur} (case ${caseActu})`);
 
-
+        // Verifie si la case est bien une propriété achetable ( Propriété, Gare ou Compagnie )
         const verifProprieteRes = await fetch(`/api/estPropriete/${caseActu}`, { method: "GET" });
         if (!verifProprieteRes.ok) throw new Error("Erreur serveur pour la vérification de la propriété");
         const estPropriete = await verifProprieteRes.json();
@@ -162,11 +163,22 @@ document.getElementById("achatBtn").addEventListener("click", async () => {
 
         console.info("La case actuelle est une propriété achetable");
 
+        // Recupérer la case & nom de la case actuelle
         const pRes = await fetch(`/api/plateau/${caseActu}`);
         if (!pRes.ok) throw new Error("Impossible de récupérer la propriété actuelle");
         const propriete = await pRes.json();
         const nomPropriete = propriete.nom ?? propriete.name ?? "Propriété inconnue";
 
+        const prixPropriete = propriete.prixAchat;
+
+        if(joueur.capitalTotal < prixPropriete){
+            console.warn("Capital insuffisant pour acheter cette propriété");
+            document.getElementById("message").textContent = `${nomJoueur} n'a pas assez de capital pour acheter ${nomPropriete} (nécessite ${prixPropriete}, fond du joueur : ${joueur.capitalTotal})`;
+            document.getElementById("message").classList.add("error");
+            return;
+        }
+
+        // Effectue l'achat
         const buyRes = await fetch(`/api/buy/${caseActu}`, { method: "POST" });
         if (!buyRes.ok) throw new Error(`Erreur serveur lors de l'achat : ${buyRes.status}`);
 
@@ -182,6 +194,8 @@ document.getElementById("achatBtn").addEventListener("click", async () => {
     }
 });
 
+
+// todo : menu, affichage cartes cases, & decr capital, afficher sold joueurs
 
 
 loadPlateau();

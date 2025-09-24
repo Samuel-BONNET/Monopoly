@@ -87,6 +87,11 @@ public class GameController {
         return gameService.getJoueurAJouer().getCaseActuelle();
     }
 
+    @GetMapping("/money{id}")
+    public int getMoney(@PathVariable int id){
+        return gameService.getJoueurs()[getJoueur(id)].getCapitalTotal();
+    }
+
     @PostMapping("/deplacer/{joueurIndex}/{nbCases}")
     public void deplacerJoueur(@PathVariable int joueurIndex, @PathVariable int nbCases) {
         gameService.deplacerJoueur(joueurIndex, nbCases);
