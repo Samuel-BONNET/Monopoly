@@ -26,15 +26,13 @@ function drawPlateau() {
         div.className = "case";
         div.textContent = c.nom;
 
-        // i va de 0 à 39 → parfait pour getCasePosition
         const pos = getCasePosition(i);
-
         div.style.position = "absolute";
         div.style.left = pos.x + "px";
         div.style.top = pos.y + "px";
 
         boardDiv.appendChild(div);
-        caseDivs[c.id] = div;
+        caseDivs[i] = div;
     });
 }
 
@@ -83,22 +81,33 @@ function getCasePosition(numCase) {
 
 function drawPions() {
     document.querySelectorAll(".pion").forEach(e => e.remove());
-
     joueurs.forEach(j => {
         const div = caseDivs[j.caseActuelle];
-        if (div) {
-            const pionSpan = document.createElement("span");
-            pionSpan.className = "pion";
-            pionSpan.textContent = j.pion;
-            div.appendChild(pionSpan);
+        if (!div) {
+            console.warn(`⚠️ Case introuvable pour ${j.nom} à ${j.caseActuelle}`);
+            return;
         }
+        const pionSpan = document.createElement("span");
+        pionSpan.className = "pion";
+        pionSpan.textContent = j.pion;
+        div.appendChild(pionSpan);
     });
+}
+async function initGame() {
+    await loadPlateau();
+    await loadJoueurs();
+
+    const jRes = await fetch("/api/joueurAJouer");
+    if (jRes.ok) {
+        const joueur = await jRes.json();
+        document.getElementById("currentPlayer").textContent =
+            `C'est au tour de ${joueur.nom}`;
+    }
 }
 
 // Lancer dés
 document.getElementById("rollBtn").addEventListener("click", async () => {
     try {
-
         const res = await fetch("/api/roll", { method: "POST" });
         const nb = await res.json();
 
@@ -110,6 +119,9 @@ document.getElementById("rollBtn").addEventListener("click", async () => {
         await fetch(`/api/deplacer/${tourJoueur}/${nb}`, { method: 'POST' });
 
         await loadJoueurs();
+        console.log("Joueurs après déplacement :", joueurs);
+        document.getElementById("message").innerHTML =
+            `Lancé de dés : ${nb}<br>Vous avancez jusqu'à ${joueurs[tourJoueur].caseActuelle}.`;
 
     } catch (err) {
         console.error("Erreur lors du lancer de dés :", err);
@@ -194,9 +206,7 @@ document.getElementById("achatBtn").addEventListener("click", async () => {
     }
 });
 
+// Initialisation du jeu
+document.addEventListener("DOMContentLoaded", initGame);
 
 // todo : menu, affichage cartes cases, & decr capital, afficher sold joueurs
-
-
-loadPlateau();
-loadJoueurs();

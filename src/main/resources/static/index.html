@@ -52,22 +52,9 @@
 <button id="startGameBtn" class="btn">Démarrer la partie</button>
 
 <script>
-    // Au clic, on redirige vers le jeux (plateau)
     document.getElementById("startGameBtn").addEventListener("click", () => {
-        // Vérifie que la partie est prête avant de lancer (optionnel)
-        fetch("/api/state")
-            .then(res => res.json())
-            .then(state => {
-                console.log("État du jeu :", state);
-                // Ici, tu peux vérifier si des joueurs sont initialisés avant de partir
-                window.location.href = "/Game.html";
-            })
-            .catch(err => {
-                console.error("Impossible de charger l'état du jeu :", err);
-                window.location.href = "/Game.html"; // fallback
-            });
+        window.location.href = "/Game.html";
     });
 </script>
-
 </body>
 </html>
