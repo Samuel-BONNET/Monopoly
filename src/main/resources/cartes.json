@@ -1,5 +1,5 @@
 {
-  "CCommunauté":[
+  "ccommunaute":[
     {"nom":"Avancez jusqu'à la case Départ",
       "texte":"Encaissez 200 $.",
       "action":"Credit",
@@ -65,7 +65,7 @@
       "action":"Sortie-Prison",
       "value":null}
   ],
-  "Chance":[
+  "chance":[
     {"nom":"Déplacement",
       "texte":"Reculez de 3 cases.",
       "action":"Reculer",

@@ -1,6 +1,8 @@
 package com.monopoly.Monopoly.controller;
 
+import com.monopoly.Monopoly.models.InsufficientFundsException;
 import com.monopoly.Monopoly.models.Joueur;
+import com.monopoly.Monopoly.models.plateau.Carte;
 import com.monopoly.Monopoly.models.plateau.ICase;
 import com.monopoly.Monopoly.models.plateau.IPossession;
 import com.monopoly.Monopoly.models.plateau.Plateau;
@@ -15,9 +17,9 @@ import java.util.Map;
 @RequestMapping("/api")
 public class GameController {
 
-    @Autowired
     private final GameService gameService;
 
+    @Autowired
     public GameController(GameService gameService) {
         this.gameService = gameService;
     }
@@ -44,8 +46,8 @@ public class GameController {
     }
 
     @GetMapping("/plateau")
-    public Plateau getPlateau() {
-        return gameService.getPlateau();
+    public List<ICase> getPlateau() {
+        return gameService.getPlateau().getTotalCase();
     }
 
     @GetMapping("/plateau/{id}")
@@ -87,13 +89,34 @@ public class GameController {
         return gameService.getJoueurAJouer().getCaseActuelle();
     }
 
-    @GetMapping("/money{id}")
+    @GetMapping("/money/{id}")
     public int getMoney(@PathVariable int id){
         return gameService.getJoueurs()[getJoueur(id)].getCapitalTotal();
     }
 
     @PostMapping("/deplacer/{joueurIndex}/{nbCases}")
-    public void deplacerJoueur(@PathVariable int joueurIndex, @PathVariable int nbCases) {
+    public void deplacerJoueur(@PathVariable int joueurIndex, @PathVariable int nbCases) throws InsufficientFundsException {
         gameService.deplacerJoueur(joueurIndex, nbCases);
     }
+
+    @GetMapping("/chance")
+    public Carte getChance() {
+        return gameService.getChance();
+    }
+
+    @GetMapping("/communaute")
+    public Carte getCommunaute() {
+        return gameService.getCommunaute();
+    }
+
+    @PostMapping("/ActionCarteChance")
+    public void appliquerCarteChance(@RequestBody Carte carte) throws InsufficientFundsException {
+        gameService.actionCarteChance(carte);
+    }
+
+    @PostMapping("/ActionCarteCommunaute")
+    public void appliquerCarteCommunaute(@RequestBody Carte carte) throws InsufficientFundsException {
+        gameService.actionCarteCommunaute(carte);
+    }
+
 }

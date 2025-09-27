@@ -3,12 +3,12 @@ package com.monopoly.Monopoly.models;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monopoly.Monopoly.models.plateau.*;
 
-import java.io.File;
+import java.io.InputStream;
 import java.util.*;
 
 public class Partie {
 
-    private int nbJoueur, tourGolbal=1, tourJoueur=1, carteChanceTirees = 0, carteCommunauteTirees = 0;
+    private int nbJoueur, tourGolbal = 1, tourJoueur = 1, carteChanceTirees = 0, carteCommunauteTirees = 0;
     private boolean victoire = false;
     private Joueur carteChanceSortiPrisonEnJeu = null;
     private Joueur carteCommunauteSortiPrisonEnJeu  = null;
@@ -16,8 +16,7 @@ public class Partie {
     private Scanner sc = new Scanner(System.in);
     private Random rand = new Random();
     private Plateau plateau;
-    private List<Carte> listeChance;
-    private List<Carte> listeCaisseCommunaute;
+    private List<Carte> listeChance, deckChance, listeCaisseCommunaute, deckCaisseCommunaute;
     private Map<IPossession, Joueur> listePossessionJoueur = new HashMap<>();
     private static final Map<Integer,Integer> SommeDepart = Map.of(100,2);
 
@@ -25,14 +24,66 @@ public class Partie {
         plateau = new Plateau();
         this.nbJoueur = nbJoueur;
         listeJoueurs = new Joueur[nbJoueur];
+        chargerCarte();
+        remplirDeckChance();
+        remplirDeckCaisseCommunaute();
     }
 
     // -------------------------------
     // 🔧 Getters / Setters
     // -------------------------------
 
+    public List<Carte> getDeckCaisseCommunaute() {
+        if (deckCaisseCommunaute == null || deckCaisseCommunaute.isEmpty()) {
+            remplirDeckCaisseCommunaute();
+        }
+        return deckCaisseCommunaute;
+    }
+
+    public List<Carte> getDeckChance() {
+        if (deckChance == null || deckChance.isEmpty()) {
+            remplirDeckChance();
+        }
+        return deckChance;
+    }
+
+    public Carte piocherCarteChance(){
+        Joueur joueur = listeJoueurs[tourJoueur];
+        if (deckChance == null || deckChance.isEmpty()) {
+            remplirDeckChance();
+        }
+        if (deckChance.isEmpty()) {
+            return null; // pas de cartes -> on retourne null (caller doit gérer)
+        }
+
+        // Prendre la première carte (top of deck)
+        Carte c = deckChance.remove(0);
+
+        if (c != null && "Sortie-Prison".equals(c.getAFaire())) {
+            carteChanceSortiPrisonEnJeu = joueur;
+        }
+        return c;
+    }
+
+    public Carte piocherCarteCommunaute(){
+        Joueur joueur = listeJoueurs[tourJoueur];
+        if (deckCaisseCommunaute == null || deckCaisseCommunaute.isEmpty()) {
+            remplirDeckCaisseCommunaute();
+        }
+        if (deckCaisseCommunaute.isEmpty()) {
+            return null;
+        }
+
+        Carte c = deckCaisseCommunaute.remove(0);
+
+        if (c != null && "Sortie-Prison".equals(c.getAFaire())) {
+            carteCommunauteSortiPrisonEnJeu = joueur;
+        }
+        return c;
+    }
+
     public Joueur getJoueur(int id){
-        return listeJoueurs[id%nbJoueur];
+        return listeJoueurs[id % nbJoueur];
     }
 
     public Joueur getJoueur(Joueur joueur){
@@ -138,73 +189,32 @@ public class Partie {
         }
     }
 
-    public void chargerCarte(){
+    public void chargerCarte() {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            CarteMonopoly cartes = mapper.readValue(
-                    new File("cartes.json"),
-                    CarteMonopoly.class
-            );
-            listeCaisseCommunaute = cartes.getCCommunaute();
-            listeChance = cartes.getChance();
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }
-    }
+            // Charger depuis les resources
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("cartes.json");
+            if (inputStream == null) {
+                System.err.println("⚠️ Impossible de trouver 'cartes.json' dans le classpath (src/main/resources).");
+                listeCaisseCommunaute = new ArrayList<>();
+                listeChance = new ArrayList<>();
+                return;
+            }
+            CarteMonopoly cartes = mapper.readValue(inputStream, CarteMonopoly.class);
 
-    public void tourSuivant() throws InsufficientFundsException {
-        System.out.println("Au tour de :" + listeJoueurs[tourJoueur].getNom());
-        lancerDes(0);
-        incrTourJoueur();
-        switch (listeJoueurs[tourJoueur].getCaseActuelle()){
-            case 1,3,6,8,9,11,13,14,16,18,19,21,23,24,26,27,29,31,32,34,37,39:// valeur propriete
-                casePropriete((Propriete)plateau.getTotalCase().get(listeJoueurs[tourJoueur].getCaseActuelle()));
-                break;
-            case 2,4,5,7,10,12,15,17,20,22,25,28,30,33,35,36,38: // valeur evenement
-                caseEvent((CaseEvenement)plateau.getTotalCase().get(listeJoueurs[tourJoueur].getCaseActuelle()));
-                break;
-            default:
-                System.out.println("Autre case" );
-                break;
+            listeCaisseCommunaute = cartes.getCcommunaute();
+            listeChance = cartes.getChance();
+        } catch (Exception e) {
+            e.printStackTrace();
+            // si erreur lors du parsing, garantir listes non-null
+            if (listeCaisseCommunaute == null) listeCaisseCommunaute = new ArrayList<>();
+            if (listeChance == null) listeChance = new ArrayList<>();
         }
     }
 
     // -------------------------------
     // 🎯 Gestion Évenements
     // -------------------------------
-
-    public void caseEvent(CaseEvenement caseEvenement) throws InsufficientFundsException {
-        switch (caseEvenement.getId()){
-            case 0:
-                // depart
-                caseDepart();
-                break;
-            case 1,5,9:
-                // caisse commu
-                tirageCaisseCommunaute();
-                break;
-            case 2:
-                // impots revenu
-                payerImpot(200);
-                break;
-            case 3,7,10:
-                // chance
-                tirageChance();
-                break;
-            case 4,6:
-                // visite prison & parc
-                break;
-            case 8:
-                //prison
-                allerPrison();
-                break;
-            case 11:
-                // impot de luxe
-                payerImpot(100);
-                break;
-        }
-    }
 
     public int eventService(int nbService){
         int[] lance = lancerDesDouble();
@@ -213,7 +223,6 @@ public class Partie {
             return total*4;
         }
         else return total*10;
-
     }
 
     public void casePropriete(Propriete propriete) throws InsufficientFundsException {
@@ -240,109 +249,72 @@ public class Partie {
         listeJoueurs[tourJoueur].incrCapital(SommeDepart);
     }
 
-    public void tirageCaisseCommunaute() throws InsufficientFundsException {
-        if (carteCommunauteTirees % 16 == 0){
-            melangeCaisseCommunaute();
-            carteCommunauteTirees = 0;
-        }
-        else{
-            switch (listeCaisseCommunaute.get(carteCommunauteTirees).getAFaire()){
-                case "Credit":
-                    listeJoueurs[tourJoueur].incrCapital((int)listeCaisseCommunaute.get(carteCommunauteTirees).getValeur());
-                    break;
-                case "Credit-Joueur":
-                    creditJoueur((int)listeCaisseCommunaute.get(carteCommunauteTirees).getValeur(), listeJoueurs[tourJoueur]);
-                    break;
-                case "Debit":
-                    listeJoueurs[tourJoueur].decrCapital((int)listeCaisseCommunaute.get(carteCommunauteTirees).getValeur());
-                    break;
-                case "Prison":
-                    allerPrison();
-                    break;
-                case "Sortie-Prison":
-                    if (carteCommunauteSortiPrisonEnJeu != null){ // si carte sortie de prison encore dans la pioche
-                        listeJoueurs[tourJoueur].carteSortiPrison();
-                        carteCommunauteSortiPrisonEnJeu = listeJoueurs[tourJoueur];
-                    }
-                    else { // sinon on prend une autre carte
-                        carteCommunauteTirees++;
-                        tirageCaisseCommunaute();
-                    }
-                    break;
-                default:
-                    System.out.println(" Autre évenement !");
-            }
-            carteCommunauteTirees++;
+    public void tirageCaisseCommunaute(String Action) throws InsufficientFundsException {
+        switch (Action){
+            case "Credit":
+                listeJoueurs[tourJoueur].incrCapital((int)listeCaisseCommunaute.get(carteCommunauteTirees).getValeur());
+                break;
+            case "Credit-Joueur":
+                creditJoueur((int)listeCaisseCommunaute.get(carteCommunauteTirees).getValeur(), listeJoueurs[tourJoueur]);
+                break;
+            case "Debit":
+                listeJoueurs[tourJoueur].decrCapital((int)listeCaisseCommunaute.get(carteCommunauteTirees).getValeur());
+                break;
+            case "Prison":
+                allerPrison(listeJoueurs[tourJoueur]);
+                break;
+            case "Sortie-Prison":
+                listeJoueurs[tourJoueur].carteSortiPrison();
+                carteCommunauteSortiPrisonEnJeu = listeJoueurs[tourJoueur];
+                break;
         }
     }
 
-    public void melangeCaisseCommunaute(){
-        Collections.shuffle(listeCaisseCommunaute);
-    }
+    public void tirageChance(String Action) throws InsufficientFundsException {
 
-    public void tirageChance() throws InsufficientFundsException {
-        if (carteChanceTirees % 16 == 0){
-            melangeChance();
-            carteChanceTirees = 0;
-        }
-        else{
-            switch (listeChance.get(carteChanceTirees).getAFaire()){
-                case "Reculer":
-                    listeJoueurs[tourJoueur].avancer(-1 * (int)listeChance.get(carteChanceTirees).getValeur());
-                    break;
-                case "Avancer":
-                    avancer((String)listeChance.get(carteChanceTirees).getValeur());
-                    break;
-                case "Avancer-Gare":
-                    avancer("Gare");
-                    break;
-                case "Avancer-Compagnie":
-                    avancer("Compagnie");
-                    break;
-                case "Crédit":
-                    listeJoueurs[tourJoueur].incrCapital((int)listeChance.get(carteChanceTirees).getValeur());
-                    break;
-                case "Débit":
-                    listeJoueurs[tourJoueur].decrCapital((int)listeChance.get(carteChanceTirees).getValeur());
-                    break;
-                case "Débit-Joueur":
-                    debitJoueur((int)listeChance.get(carteChanceTirees).getValeur(), listeJoueurs[tourJoueur]);
-                    break;
-                case "Débit-Réparation":
-                    listeJoueurs[tourJoueur].debitReparation((int[])listeChance.get(carteChanceTirees).getValeur());
-                    break;
-                case "Prison":
-                    allerPrison();
-                    break;
-                case "Sortie-Prison":
-                    if(carteChanceSortiPrisonEnJeu != null){ // si la carte de sortie de prison est en jeu
-                        listeJoueurs[tourJoueur].carteSortiPrison();
-                        carteChanceSortiPrisonEnJeu = listeJoueurs[tourJoueur];
-                    }
-                    else{
-                        carteChanceTirees++;
-                        tirageChance(); //sinon on tire une autre carte
-                    }
-                    break;
-                default:
-                    System.out.println(" Autre évenement !");
-                    break;
-            }
-            carteChanceTirees++;
+        switch (Action){
+            case "Reculer":
+                listeJoueurs[tourJoueur].avancer(-1 * (int)listeChance.get(carteChanceTirees).getValeur());
+                break;
+            case "Avancer":
+                avancer((String)listeChance.get(carteChanceTirees).getValeur());
+                break;
+            case "Avancer-Gare":
+                avancer("Gare");
+                break;
+            case "Avancer-Compagnie":
+                avancer("Compagnie");
+                break;
+            case "Crédit":
+                listeJoueurs[tourJoueur].incrCapital((int)listeChance.get(carteChanceTirees).getValeur());
+                break;
+            case "Débit":
+                listeJoueurs[tourJoueur].decrCapital((int)listeChance.get(carteChanceTirees).getValeur());
+                break;
+            case "Débit-Joueur":
+                debitJoueur((int)listeChance.get(carteChanceTirees).getValeur(), listeJoueurs[tourJoueur]);
+                break;
+            case "Débit-Réparation":
+                listeJoueurs[tourJoueur].debitReparation((int[])listeChance.get(carteChanceTirees).getValeur());
+                break;
+            case "Prison":
+                allerPrison(listeJoueurs[tourJoueur]);
+                break;
+            case "Sortie-Prison":
+                listeJoueurs[tourJoueur].carteSortiPrison();
+                carteChanceSortiPrisonEnJeu = listeJoueurs[tourJoueur];
+                break;
         }
     }
 
-    public void melangeChance(){
-        Collections.shuffle(listeChance);
+    public String allerPrison(Joueur joueur){
+        joueur.allerEnPrison(tourGolbal);
+        return "Vous allez directement en prison sans passer par la case départ !";
     }
 
-    public void allerPrison(){
-        System.out.println("Vous allez directement en Prison ! \n Si vous passez par la case départ, vous ne recevez pas 200 $ !");
-        listeJoueurs[tourJoueur].allerEnPrison(tourGolbal);
-    }
-
-    public void payerImpot(int total) throws InsufficientFundsException {
+    public String payerImpot(int total) throws InsufficientFundsException {
         listeJoueurs[tourJoueur].decrCapital(total);
+        return "Payez la somme de :" + total;
     }
 
     public void incrTourJoueur() {
@@ -351,7 +323,7 @@ public class Partie {
     }
 
     public void incrTourGolbal() {
-        tourGolbal = tourGolbal++;
+        tourGolbal++;
     }
 
     public void reglerMontantLoyer(Joueur payeur, Joueur receveur, IPossession bien) throws InsufficientFundsException {
@@ -374,6 +346,35 @@ public class Partie {
         }
     }
 
+    public void remplirDeckChance() {
+        if (listeChance == null) {
+            System.err.println("⚠️ Liste des cartes Chance non chargée !");
+            listeChance = new ArrayList<>();
+        }
+
+        deckChance = new ArrayList<>(listeChance);
+
+        if (carteChanceSortiPrisonEnJeu != null) {
+            deckChance.removeIf(c -> "Sorti de Prison".equals(c.getAFaire()));
+        }
+
+        Collections.shuffle(deckChance);
+    }
+
+    public void remplirDeckCaisseCommunaute() {
+        if (listeCaisseCommunaute == null) {
+            System.err.println("⚠️ Liste des cartes Caisse de Communauté non chargée !");
+            listeCaisseCommunaute = new ArrayList<>();
+        }
+
+        deckCaisseCommunaute = new ArrayList<>(listeCaisseCommunaute);
+
+        if (carteCommunauteSortiPrisonEnJeu != null) {
+            deckCaisseCommunaute.removeIf(c -> "Sorti de Prison".equals(c.getAFaire()));
+        }
+
+        Collections.shuffle(deckCaisseCommunaute);
+    }
 
     // -------------------------------
     // 🎲 Gestion de l'Aléatoire
@@ -408,7 +409,6 @@ public class Partie {
             }
         }
     }
-
 
     // -------------------------------
     // ⚖️ Gestion entre Joueur
@@ -457,7 +457,6 @@ public class Partie {
             }
         }
     }
-
 
     public void vente(IPossession bienAVendre, Joueur acheteur, int prix) throws InsufficientFundsException {
         Joueur vendeur = listePossessionJoueur.get(bienAVendre);
@@ -617,14 +616,54 @@ public class Partie {
         chargerCarte();
         affichageStart();
         setUpJoueur();
-        while(verifierVictoire() == null){
-            tourSuivant();
+    }
 
-        }
-        victoire(verifierVictoire());
+    public void jouerTour() {
+        Joueur joueurCourrant = listeJoueurs[tourJoueur];
+
+        verifierVictoire();
+        incrTourJoueur();
     }
 
     public void victoire(Joueur joueur){
         System.out.println(" Bravo ! \n" + joueur.getNom() + " a gagné !");
+    }
+
+    public boolean isVictoire() {
+        return victoire;
+    }
+
+    public void setVictoire(boolean victoire) {
+        this.victoire = victoire;
+    }
+
+    public void deplacerJoueur(int nbCases) throws InsufficientFundsException {
+        Joueur joueur = listeJoueurs[tourJoueur];
+        int nouvellePosition = (joueur.getCaseActuelle() + nbCases) % 40;
+        joueur.setCaseActuelle(nouvellePosition);
+
+        ICase caseActuelle = plateau.getCase(nouvellePosition);
+        switch (caseActuelle.getId()){
+            case 2,18,33:
+                // communauté
+                piocherCarteCommunaute();
+                break;
+            case 7,22,36:
+                // chance
+                piocherCarteChance();
+                break;
+            case 30:
+                allerPrison(joueur);
+                break;
+            case 4:
+                payerImpot(100);
+                break;
+            case 38:
+                payerImpot(200);
+                break;
+            default:
+                // autres cases
+                break;
+        }
     }
 }

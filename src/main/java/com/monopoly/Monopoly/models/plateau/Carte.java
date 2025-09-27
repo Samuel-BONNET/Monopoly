@@ -1,5 +1,7 @@
 package com.monopoly.Monopoly.models.plateau;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.monopoly.Monopoly.models.enums.TypeCarte;
@@ -8,7 +10,15 @@ public class Carte {
     private static int compteur = 0;
     private int id;
     private TypeCarte typeCarte;
-    private String description, aFaire;
+    private String nom;
+
+    @JsonProperty("action")
+    private String aFaire;
+
+    @JsonProperty("texte")
+    private String description;
+
+    @JsonProperty("value")
     private Object valeur;
 
     Carte(int id, TypeCarte typeCarte, String description, String aFaire) {
@@ -48,6 +58,10 @@ public class Carte {
 
     public Object getValeur() {
         return valeur;
+    }
+
+    public String getNom() {
+        return nom;
     }
 
 

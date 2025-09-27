@@ -1,11 +1,12 @@
 const boardDiv = document.getElementById("board");
 let plateau = [];
 let joueurs = [];
+let caseDivs = {};
 
+// --- Plateau & Joueurs ---
 async function loadPlateau() {
     const res = await fetch("/api/plateau");
-    const data = await res.json();
-    plateau = data.plateau; // <-- MAJ du global
+    plateau = await res.json();
     drawPlateau();
 }
 
@@ -15,19 +16,16 @@ async function loadJoueurs() {
     drawPions();
 }
 
-let caseDivs = {}; // global
-
+// --- Dessin plateau et pions ---
 function drawPlateau() {
     boardDiv.innerHTML = "";
-    caseDivs = {}; // reset
-
+    caseDivs = {};
     plateau.forEach((c, i) => {
         const div = document.createElement("div");
         div.className = "case";
         div.textContent = c.nom;
 
         const pos = getCasePosition(i);
-        div.style.position = "absolute";
         div.style.left = pos.x + "px";
         div.style.top = pos.y + "px";
 
@@ -36,177 +34,182 @@ function drawPlateau() {
     });
 }
 
-function getCasePosition(numCase) {
-    const size = 60;
-    const topBottom = 11; // cases en haut et bas
-    const sides = 9;      // cases sur les côtés
-    const total = topBottom * size;
-
-    let x = 0, y = 0;
-
-    if (numCase === 0) { // Départ / GO (coin bas-droit)
-        x = total - size;
-        y = total - size;
-    } else if (numCase > 0 && numCase < 10) { // ligne du bas, droite → gauche
-        x = total - size * (numCase + 1);
-        y = total - size;
-    } else if (numCase === 10) { // Prison (coin bas-gauche)
-        x = 0;
-        y = total - size;
-    } else if (numCase > 10 && numCase < 20) { // colonne gauche, bas → haut
-        const idx = numCase - 11; // 0 à 8
-        x = 0;
-        y = total - size - size * (idx + 1); // cases juste au-dessus de la Prison
-    } else if (numCase === 20) { // coin haut-gauche
-        x = 0;
-        y = 0;
-    } else if (numCase > 20 && numCase < 30) { // ligne du haut, gauche → droite
-        const idx = numCase - 21; // 0 à 8
-        x = size * (idx + 1);
-        y = 0;
-    } else if (numCase === 30) { // coin haut-droit
-        x = total - size;
-        y = 0;
-    } else if (numCase > 30 && numCase < 39) { // colonne droite, haut → bas
-        const idx = numCase - 31; // 0 à 7
-        x = total - size;
-        y = size * (idx + 1); // cases 31 → 38
-    } else if (numCase === 39) { // Rue de la Paix / Parc Gratuit (juste avant Départ)
-        x = total - size;
-        y = total - 2 * size;
-    }
-
-    return { x, y };
-}
-
 function drawPions() {
     document.querySelectorAll(".pion").forEach(e => e.remove());
     joueurs.forEach(j => {
         const div = caseDivs[j.caseActuelle];
-        if (!div) {
-            console.warn(`⚠️ Case introuvable pour ${j.nom} à ${j.caseActuelle}`);
-            return;
-        }
+        if (!div) return;
         const pionSpan = document.createElement("span");
         pionSpan.className = "pion";
         pionSpan.textContent = j.pion;
         div.appendChild(pionSpan);
     });
 }
+
+function getCasePosition(numCase) {
+    const size = 60, total = 11 * size;
+    let x = 0, y = 0;
+    if (numCase === 0) { x = total - size; y = total - size; }
+    else if (numCase > 0 && numCase < 10) { x = total - size * (numCase + 1); y = total - size; }
+    else if (numCase === 10) { x = 0; y = total - size; }
+    else if (numCase > 10 && numCase < 20) { x = 0; y = total - size - size * (numCase - 10); }
+    else if (numCase === 20) { x = 0; y = 0; }
+    else if (numCase > 20 && numCase < 30) { x = size * (numCase - 20); y = 0; }
+    else if (numCase === 30) { x = total - size; y = 0; }
+    else if (numCase > 30 && numCase < 39) { x = total - size; y = size * (numCase - 30); }
+    else if (numCase === 39) { x = total - size; y = total - 2 * size; }
+    return { x, y };
+}
+
+// --- Init Game ---
 async function initGame() {
     await loadPlateau();
     await loadJoueurs();
-
-    const jRes = await fetch("/api/joueurAJouer");
-    if (jRes.ok) {
-        const joueur = await jRes.json();
-        document.getElementById("currentPlayer").textContent =
-            `C'est au tour de ${joueur.nom}`;
+    const res = await fetch("/api/joueurAJouer");
+    if (res.ok) {
+        const joueur = await res.json();
+        document.getElementById("currentPlayer").textContent = `C'est au tour de ${joueur.nom}`;
     }
 }
 
-// Lancer dés
+// --- Lancer dés ---
 document.getElementById("rollBtn").addEventListener("click", async () => {
-    try {
-        const res = await fetch("/api/roll", { method: "POST" });
-        const nb = await res.json();
+    const res = await fetch("/api/roll", { method: "POST" });
+    const nb = await res.json();
 
-        console.log("Nombre de cases depuis Java :", nb);
+    const resTour = await fetch("/api/tourJoueur");
+    const tourJoueur = await resTour.json();
 
-        const resTour = await fetch("/api/tourJoueur");
-        const tourJoueur = await resTour.json();
+    await fetch(`/api/deplacer/${tourJoueur}/${nb}`, { method: 'POST' });
+    await loadJoueurs();
 
-        await fetch(`/api/deplacer/${tourJoueur}/${nb}`, { method: 'POST' });
+    const joueur = joueurs[tourJoueur];
+    document.getElementById("message").innerHTML =
+        `Lancé de dés : ${nb}<br>Vous avancez jusqu'à ${joueur.caseActuelle}.`;
 
-        await loadJoueurs();
-        console.log("Joueurs après déplacement :", joueurs);
-        document.getElementById("message").innerHTML =
-            `Lancé de dés : ${nb}<br>Vous avancez jusqu'à ${joueurs[tourJoueur].caseActuelle}.`;
+    // --- Vérification propriété pour menu achat ---
+    const caseActu = joueur.caseActuelle;
+    const verifRes = await fetch(`/api/estPropriete/${caseActu}`);
+    const estPropriete = await verifRes.json();
 
-    } catch (err) {
-        console.error("Erreur lors du lancer de dés :", err);
+    if (estPropriete) {
+        showAchatMenu(joueur, caseActu);
     }
+    const caseData = plateau[caseActu];
+    if (caseData.type === "CaseEvenement" && caseData.nom.toUpperCase().includes("CHANCE")) {
+        await caseCarte("CHANCE");
+    }
+    if (caseData.type === "CaseEvenement" && caseData.nom.toUpperCase().includes("COMMUNAUTE")) {
+        await caseCarte("COMMUNAUTE");
+    }
+
+
 });
 
-// Fin de tour
-document.getElementById("endTurnBtn").addEventListener("click", async() => {
-    try{
-        const res = await fetch("/api/finTour", { method: "POST" });
+// --- Mini Menu Achat ---
+function showAchatMenu(joueur, caseNum) {
+    // Crée le menu
+    let menu = document.createElement("div");
+    menu.id = "achatMenu";
+    menu.style.position = "absolute";
+    menu.style.top = "50%";
+    menu.style.left = "50%";
+    menu.style.transform = "translate(-50%, -50%)";
+    menu.style.background = "#fff";
+    menu.style.border = "2px solid #000";
+    menu.style.padding = "20px";
+    menu.style.zIndex = "200";
+    menu.style.textAlign = "center";
 
-        if (!res.ok) {
-            throw new Error(`Erreur serveur : ${res.status}`);
+    menu.innerHTML = `
+        <p>${joueur.nom}, voulez-vous acheter cette propriété ?</p>
+        <button id="achatOui">Oui</button>
+        <button id="achatNon">Non</button>
+    `;
+
+    document.body.appendChild(menu);
+
+    document.getElementById("achatOui").addEventListener("click", async () => {
+        // Achat côté serveur
+        const res = await fetch(`/api/buy/${caseNum}`, { method: "POST" });
+        if (res.ok) {
+            document.getElementById("message").textContent = `${joueur.nom} a acheté la propriété !`;
+            await loadJoueurs();
+        } else {
+            document.getElementById("message").textContent = `Erreur lors de l'achat`;
         }
+        menu.remove();
+    });
 
-        const joueurCourant = await res.json();
-        console.log("Nouveau joueur :", joueurCourant.nom);
+    document.getElementById("achatNon").addEventListener("click", () => {
+        menu.remove();
+        document.getElementById("message").textContent = `${joueur.nom} passe son tour.`;
+    });
+}
 
-        await loadJoueurs();
-
-        document.getElementById("currentPlayer").textContent =
-            `C'est au tour de ${joueurCourant.nom}`;
-
-    } catch(err){
-        console.error("Erreur lors de la fin de tour :", err);
-    }
-})
-
-// Achat
-document.getElementById("achatBtn").addEventListener("click", async () => {
-    try {
-        // Recupérer le joueur qui doit jouer
-        const jRes = await fetch("/api/joueurAJouer", { method: "GET" });
-        if (!jRes.ok) throw new Error("Impossible de récupérer le joueur actuel");
-        const joueur = await jRes.json()
-
-        // Recupérer nom & case du joueur
-        const nomJoueur = joueur.nom || "Joueur inconnu";
-        const caseActu = joueur.caseActuelle;
-        console.log(`Joueur actuel : ${nomJoueur} (case ${caseActu})`);
-
-        // Verifie si la case est bien une propriété achetable ( Propriété, Gare ou Compagnie )
-        const verifProprieteRes = await fetch(`/api/estPropriete/${caseActu}`, { method: "GET" });
-        if (!verifProprieteRes.ok) throw new Error("Erreur serveur pour la vérification de la propriété");
-        const estPropriete = await verifProprieteRes.json();
-
-        if (!estPropriete) {
-            console.warn("La case actuelle n'est pas une propriété achetable");
-            return;
-        }
-
-        console.info("La case actuelle est une propriété achetable");
-
-        // Recupérer la case & nom de la case actuelle
-        const pRes = await fetch(`/api/plateau/${caseActu}`);
-        if (!pRes.ok) throw new Error("Impossible de récupérer la propriété actuelle");
-        const propriete = await pRes.json();
-        const nomPropriete = propriete.nom ?? propriete.name ?? "Propriété inconnue";
-
-        const prixPropriete = propriete.prixAchat;
-
-        if(joueur.capitalTotal < prixPropriete){
-            console.warn("Capital insuffisant pour acheter cette propriété");
-            document.getElementById("message").textContent = `${nomJoueur} n'a pas assez de capital pour acheter ${nomPropriete} (nécessite ${prixPropriete}, fond du joueur : ${joueur.capitalTotal})`;
-            document.getElementById("message").classList.add("error");
-            return;
-        }
-
-        // Effectue l'achat
-        const buyRes = await fetch(`/api/buy/${caseActu}`, { method: "POST" });
-        if (!buyRes.ok) throw new Error(`Erreur serveur lors de l'achat : ${buyRes.status}`);
-
-        console.log(`${nomJoueur} a acheté la propriété ${nomPropriete}`);
-
-        document.getElementById("message").textContent = `${nomJoueur} a acheté la propriété : ${nomPropriete}`;
-        document.getElementById("message").classList.add("success");
-
-        await loadJoueurs();
-
-    } catch (err) {
-        console.error("Erreur lors de l'achat :", err);
-    }
+// --- Fin de tour ---
+document.getElementById("endTurnBtn").addEventListener("click", async () => {
+    await fetch("/api/finTour", { method: "POST" });
+    await loadJoueurs();
+    const joueurRes = await fetch("/api/joueurAJouer");
+    const joueur = await joueurRes.json();
+    document.getElementById("currentPlayer").textContent = `C'est au tour de ${joueur.nom}`;
 });
 
-// Initialisation du jeu
+async function caseCarte(caseType) {
+    if (caseType === "CHANCE") {
+        const response = await fetch("/api/chance");
+        if (!response.ok) {
+            console.error("Erreur lors de la récupération d'une carte Chance");
+            return;
+        }
+        const carte = await response.json();
+        afficherCarte(carte, "chance");
+    }
+
+    if (caseType === "COMMUNAUTE") {
+        const response = await fetch("/api/communaute");
+        if (!response.ok) {
+            console.error("Erreur lors de la récupération d'une carte Caisse de Communauté");
+            return;
+        }
+        const carte = await response.json();
+        afficherCarte(carte, "communaute");
+    }
+}
+
+function afficherCarte(carte, type) {
+    const modal = document.getElementById("carteModal");
+    const titre = document.getElementById("carteTitre");
+    const description = document.getElementById("carteDescription");
+    const boutonOk = document.getElementById("carteOk");
+
+    titre.textContent = (type === "chance" ? "Carte Chance" : "Carte Communauté");
+    description.textContent = carte.description;
+
+    modal.style.display = "flex";
+
+    boutonOk.onclick = async () => {
+        await appliquerActionCarte(carte, type);
+        modal.style.display = "none";
+    };
+}
+
+async function appliquerActionCarte(carte, type) {
+    const url = type === "chance" ? "/api/ActionCarteChance" : "/api/ActionCarteCommunaute";
+    const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(carte)
+    });
+
+    if (!response.ok) {
+        console.error("Erreur lors de l'application de la carte", await response.text());
+    } else {
+        console.log("Carte appliquée avec succès !");
+        await refreshGameState();
+    }
+}
+
+
 document.addEventListener("DOMContentLoaded", initGame);
-
-// todo : menu, affichage cartes cases, & decr capital, afficher sold joueurs

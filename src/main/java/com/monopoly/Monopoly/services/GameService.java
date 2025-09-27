@@ -1,11 +1,9 @@
 package com.monopoly.Monopoly.services;
 
+import com.monopoly.Monopoly.models.InsufficientFundsException;
 import com.monopoly.Monopoly.models.Joueur;
 import com.monopoly.Monopoly.models.Partie;
-import com.monopoly.Monopoly.models.plateau.ICase;
-import com.monopoly.Monopoly.models.plateau.IPossession;
-import com.monopoly.Monopoly.models.plateau.Plateau;
-import com.monopoly.Monopoly.models.plateau.Propriete;
+import com.monopoly.Monopoly.models.plateau.*;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,8 +22,6 @@ public class GameService {
             new Joueur("Charlie", "♠"),
             new Joueur("Dylan", "♥")
     );
-
-
 
     public GameService() {
         this.partie = new Partie(4);
@@ -85,7 +81,12 @@ public class GameService {
     }
 
     public Joueur[] getJoueurs() {
-        return partie.getListeJoueurs();
+        List<Joueur> joueurs = new ArrayList<>();
+        for(Joueur j: partie.getListeJoueurs()){
+            if (j != null) joueurs.add(j);
+        }
+        Joueur[] joueurNonNull = joueurs.toArray(new Joueur[joueurs.size()]);
+        return joueurNonNull;
     }
 
     public int getTourJoueur(){
@@ -108,4 +109,21 @@ public class GameService {
     public boolean estPropriete(int caseActuelle) {
         return partie.getPlateau().getTotalCase().get(caseActuelle) instanceof IPossession;
     }
+
+    public Carte getChance(){
+        return partie.piocherCarteChance();
+    }
+
+    public Carte getCommunaute(){
+        return partie.piocherCarteCommunaute();
+    }
+
+    public void actionCarteChance(Carte carte) throws InsufficientFundsException {
+        partie.tirageChance(carte.getAFaire());
+    }
+
+    public void actionCarteCommunaute(Carte carte) throws InsufficientFundsException {
+        partie.tirageCaisseCommunaute(carte.getAFaire());
+    }
+
 }

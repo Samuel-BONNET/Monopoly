@@ -130,12 +130,30 @@
     <h4 id="message"></h4>
 </div>
 
+<!-- Menu Choix achat-->
+<div id="miniMenuAchat" style="display:none; position:absolute; padding:15px; background:#fff; border:2px solid #222; border-radius:10px; z-index:200;">
+    <p id="miniMenuText">Voulez-vous acheter cette propriété ?</p>
+    <button id="achatOuiBtn">Oui</button>
+    <button id="achatNonBtn">Non</button>
+</div>
+
+
 <!-- Boutons d'actions -->
 <div id="controls">
     <button id="rollBtn">Lancer Dés</button>
     <button id="endTurnBtn">Fin de Tour</button>
     <button id="achatBtn">Acheter</button>
 </div>
+
+<!-- Affichage Cartes Chance / Communauté -->
+<div id="carteModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <h3 id="carteTitre"></h3>
+        <p id="carteDescription"></p>
+        <button id="carteOk">OK</button>
+    </div>
+</div>
+
 
 <script src="/js/plateau.js" defer></script>
 <script>
