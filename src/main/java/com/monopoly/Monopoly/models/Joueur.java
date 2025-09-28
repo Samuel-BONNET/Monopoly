@@ -2,6 +2,7 @@ package com.monopoly.Monopoly.models;
 
 
 import java.sql.SQLOutput;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -18,22 +19,11 @@ public class Joueur {
     private String nom, pion;
     private Propriete[] listeProprietes = new Propriete[25];// nb max de propriétés
     private boolean estEnPrison = false, estEliminer = false;
-    private Map<Integer, Integer> capital;
-    private Map<Integer, Integer> start = new HashMap<>() {{
-        put(500, 2);
-        put(100, 4);
-        put(50, 1);
-        put(20, 1);
-        put(10, 2);
-        put(5, 1 );
-        put(1, 5);
-    }}; // Banque du Joueur
 
     public Joueur(int id, String nom, String pion) {
         this.id = id;
         this.nom = nom;
         this.pion = pion;
-        this.capital = start;
     }
 
     public Joueur(String nom, String pion) {
@@ -88,10 +78,6 @@ public class Joueur {
 
     public void setEstEliminer(boolean estEliminer) {
         this.estEliminer = estEliminer;
-    }
-
-    public Map<Integer, Integer> getCapital() {
-        return capital;
     }
 
     public Propriete[] getListe_proprietes() {
@@ -154,19 +140,30 @@ public class Joueur {
         this.tourEntrePrison = nbTourEntrePrison;
     }
 
-
-
     @Override
     public String toString() {
         return "Joueur{" +
-                "id=" + id +
+                "scan=" + scan +
+                ", id=" + id +
+                ", caseActuelle=" + caseActuelle +
+                ", capitalTotal=" + capitalTotal +
+                ", nbPropriete=" + nbPropriete +
+                ", nbMaison=" + nbMaison +
+                ", nbHotel=" + nbHotel +
+                ", nbGare=" + nbGare +
+                ", nbService=" + nbService +
+                ", tourEntrePrison=" + tourEntrePrison +
+                ", cptDouble=" + cptDouble +
                 ", nom='" + nom + '\'' +
                 ", pion='" + pion + '\'' +
-                ", capital=" + capital +
+                ", listeProprietes=" + Arrays.toString(listeProprietes) +
+                ", estEnPrison=" + estEnPrison +
+                ", estEliminer=" + estEliminer +
                 '}';
     }
 
-    // -------------------------------
+
+// -------------------------------
     // 💰 Gestion Économie
     // -------------------------------
 
@@ -178,160 +175,20 @@ public class Joueur {
         return total;
     }
 
-    public void incrCapital(Map<Integer, Integer> total){
-        for(Map.Entry<Integer, Integer> clef : total.entrySet()){
-            int valeur = clef.getKey();
-            int nb = clef.getValue();
-            capital.put(valeur, capital.getOrDefault(valeur,0) + nb);
-        }
-        capitalTotal = compteCapital(capital); // Actualisation Balance
-    }
-
     public void incrCapital(int total){
-        //Todo
+        this.capitalTotal += total; // Actualisation Balance
     }
 
-    public void faireMonnaie(int totalARendre){
-        Argent[] listeBillets = {Argent.CINQ_CENTS, Argent.DEUX_CENTS, Argent.CENT, Argent.CINQUANTE, Argent.VINGT, Argent.DIX, Argent.CINQ, Argent.UN};
-        int total = 0;
-        while(total != totalARendre) {
-            System.out.println("Combien de billet(s) de 500 :");
-            int nb500 = scan.nextInt();
-            total += nb500*500;
-            System.out.println("Combien de billet(s) de 100 :");
-            int nb100 = scan.nextInt();
-            total += nb100*100;
-            System.out.println("Combien de billet(s) de 50 :");
-            int nb50 = scan.nextInt();
-            total += nb50*50;
-            System.out.println("Combien de billet(s) de 20 :");
-            int nb20 = scan.nextInt();
-            total += nb20*20;
-            System.out.println("Combien de billet(s) de 10 :");
-            int nb10 = scan.nextInt();
-            total += nb10*10;
-            System.out.println("Combien de billet(s) de 5 :");
-            int nb5 = scan.nextInt();
-            total += nb5*5;
-            System.out.println("Combien de billet(s) de 1 :");
-            int nb1 = scan.nextInt();
-            total += nb1*1;
-            switch (Integer.compare(total,totalARendre)){
-                case -1:
-                    System.out.println("Somme choisie Inférieure à ce qui est dû");
-                    total = 0;
-                    break;
-                case 0:
-                    System.out.println("Vous souhaitez recevoir "+nb500+" billet(s) de 500, " + nb100 +" billet(s) de 100, " + nb50 +" billet(s) de 50 ," + nb20 +" billet(s) de 20, "+ nb10 + " billet(s) de 10, " + nb5 + " billet(s) de 5 et "+ nb1 + " billet(s) de 1.");
-                    capital.put(500, capital.getOrDefault(500,0) + nb500);
-                    capital.put(100, capital.getOrDefault(100,0) + nb100);
-                    capital.put(50, capital.getOrDefault(50,0) + nb50);
-                    capital.put(20, capital.getOrDefault(20,0) + nb20);
-                    capital.put(10, capital.getOrDefault(10,0) + nb10);
-                    capital.put(5, capital.getOrDefault(5,0) + nb5);
-                    capital.put(1, capital.getOrDefault(1,0) + nb1);
-                    System.out.println("Votre solde à été modifié avec succès");
-                    break;
-                case 1:
-                    System.out.println("Somme choisie Supérieure à ce qui est dû");
-                    total = 0;
-                    break;
+    public int decrCapital(int total){
+        try{
+            if(this.capitalTotal < total){
+                throw new InsufficientFundsException("Fond Insufisant");
             }
+            this.capitalTotal -= total;
+        } catch (InsufficientFundsException e){
+            System.err.println(e.getMessage());
         }
-    }
-
-    public Map<Integer,Integer> decrCapital(int total) throws InsufficientFundsException  {
-        Map<Integer, Integer> somme = Map.of();
-        try {
-            if (total > capitalTotal) {
-                throw new Exception("Fonds insuffisants");
-            }
-            else{
-                boolean conditionArret = false;
-                do {
-                    System.out.println("Choissez comment régler : "+total);
-                    somme = payerMontant(total);
-                }
-                while(!conditionArret);
-            }
-        }catch(InsufficientFundsException e) {
-            System.out.println(e.getMessage());
-            System.out.println(nom + " est éliminé !");
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        return somme;
-    }
-
-    public Map<Integer, Integer> payerMontant(int totalAregler){
-        Scanner scan = new Scanner(System.in);
-        String reponse;
-        do{
-            System.out.println("Souhaitez vous faire de la monnaie ?");
-            reponse = scan.nextLine();
-            reponse.toLowerCase();
-        } while(reponse.equals("oui") || reponse.equals("yes") ||reponse.equals("ouais") || reponse.equals("non") || reponse.equals("no") ||reponse.equals("nan"));
-        switch (reponse) {
-            // eventuellement fix
-            case "oui", "ouais", "yes":
-                faireMonnaie(capitalTotal);
-                break;
-        }
-        System.out.println("Procéder au reglement de la somme de : "+totalAregler);
-        Map<Integer,Integer> capitalReduit = new HashMap<>();
-        boolean conditionArret = false;
-        int nb500, nb100, nb50, nb20, nb10, nb5,nb1;
-        do{
-            System.out.println("Combien de billet(s) de 500 ?");
-            nb500 = scan.nextInt();
-            conditionArret = nb500 <= capital.getOrDefault(500,0);
-        }while(!conditionArret);
-        conditionArret = false;
-        capitalReduit.put(500, nb500);
-        do {
-            System.out.println("Combien de billet(s) de 100 ?");
-            nb100 = scan.nextInt();
-            conditionArret = nb100 <= capital.getOrDefault(100, 0);
-        }while(!conditionArret);
-        conditionArret = false;
-        capitalReduit.put(100, nb100);
-        do{
-            System.out.println("Combien de billet(s) de 50 ?");
-            nb50 = scan.nextInt();
-            conditionArret = nb50 <= capital.getOrDefault(50, 0);
-        } while(!conditionArret);
-        conditionArret = false;
-        capitalReduit.put(50, nb50);
-        do{
-            System.out.println("Combien de billet(s) de 20 ?");
-            nb20 = scan.nextInt();
-            conditionArret = nb20 <= capital.getOrDefault(20, 0);
-        }while(!conditionArret);
-        conditionArret = false;
-        capitalReduit.put(20, nb20);
-        do{
-            System.out.println("Combien de billet(s) de 10 ?");
-            nb10 = scan.nextInt();
-            conditionArret = nb10 <= capital.getOrDefault(10, 0);
-        }while(!conditionArret);
-        conditionArret = false;
-        capitalReduit.put(10, nb10);
-        do{
-            System.out.println("Combien de billet(s) de 5 ?");
-            nb5 = scan.nextInt();
-            conditionArret = nb5 <= capital.getOrDefault(5, 0);
-        }while(!conditionArret);
-        conditionArret = false;
-        capitalReduit.put(5, nb5);
-        do{
-            System.out.println("Combien de billet(s) de 1 ?");
-            nb1 = scan.nextInt();
-            conditionArret = nb1 <= capital.getOrDefault(1, 0);
-        }while(!conditionArret);
-        capitalReduit.put(1, nb1);
-        scan.close();
-        return capitalReduit;
+        return this.capitalTotal;
     }
 
     public void debitReparation(int[] total) throws InsufficientFundsException {
@@ -376,48 +233,20 @@ public class Joueur {
         else System.out.println("Capital insuffisant");
     }
 
-    public void choixAchatPropriete(Propriete propriete){
-        if (capitalTotal >= propriete.getPrixAchat()){
-            System.out.println("Souhaitez vous acheter la propriété "+propriete.getNom()+" pour "+propriete.getPrixAchat()+"$ ? (oui/non)");
-            String reponse;
-            do{
-                reponse = scan.nextLine();
-                reponse.toLowerCase();
-            } while(!reponse.equals("oui") || !reponse.equals("yes") || !reponse.equals("ouais") || !reponse.equals("non") || !reponse.equals("no") || !reponse.equals("nan"));
-            switch (reponse) {
-                case "oui", "yes", "ouais":
-                    try {
-                        this.decrCapital(propriete.getPrixAchat());
-                        this.ajouterPropriete(propriete);
-                        System.out.println("Félicitations, vous êtes désormais propriétaire de "+propriete.getNom()+" !");
-                    } catch (InsufficientFundsException e) {
-                        System.out.println(e.getMessage());
-                    }
-                    break;
-                case "non", "no", "nan":
-                    System.out.println("Vous avez choisi de ne pas acheter la propriété.");
-                    break;
-                default:
-                    System.out.println("Réponse non reconnue. Veuillez répondre par 'oui' ou 'non'.");
-                    break;
+    public void AmeliorationPropriete(Propriete propriete) {
+        if (propriete.getNb_hotel() ==0){
+            if(propriete.getNb_maisons() == 4){
+                this.decrCapital(propriete.getPrix_hotel());
+                propriete.setNb_maisons(0);
+                propriete.setNb_hotel(1);
             }
-        }
-        else {
-            System.out.println("Capital insuffisant pour acheter cette propriété.");
+            else{
+                this.decrCapital(propriete.getPrix_maison());
+                propriete.setNb_maisons(propriete.getNb_maisons()+1);
+            }
         }
     }
 
-    public void choixAmelioration(Propriete propriete) {
-        System.out.println("Souhaitez vous améliorer la propriété " + propriete.getNom() + " ? (oui/non)");
-        String reponse = scan.nextLine();
-        reponse.toLowerCase();
-        if(reponse.equals("oui") || reponse.equals("yes") || reponse.equals("ouais")){
-            if(propriete.getEstGroupeComplet() && verificationHypothequeGroupe(propriete)){
-                // possibilité de construire / améliorer
-                //todo
-            }
-        }
-    }
 
 
     public boolean verificationHypothequeGroupe(Propriete propriete) {

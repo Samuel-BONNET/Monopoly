@@ -18,7 +18,7 @@ public class Partie {
     private Plateau plateau;
     private List<Carte> listeChance, deckChance, listeCaisseCommunaute, deckCaisseCommunaute;
     private Map<IPossession, Joueur> listePossessionJoueur = new HashMap<>();
-    private static final Map<Integer,Integer> SommeDepart = Map.of(100,2);
+    private static final int SOMME_DEPART = 200;
 
     public Partie(int nbJoueur) {
         plateau = new Plateau();
@@ -229,12 +229,12 @@ public class Partie {
         Joueur joueurActuel = listeJoueurs[tourJoueur];
         if(joueurActuel.possedePropriete(propriete)){
             // cas ou le joueur possde la propriete
-            joueurActuel.choixAmelioration(propriete);
+            choixAmelioration(propriete);
         }
         else{
             if (propriete.getProprietaire() != null){
                 // cas ou le joueur ne possede pas la propriete & la propriete à deja été achetée
-                reglerMontantLoyer(joueurActuel,propriete.getProprietaire(), propriete);
+                //listeJoueurs[tourJoueur].decrCapital(propriete.getProprietaire(), propriete);
             }
             else{
                 // cas ou le joueur ne possede pas la propriete & la propriete n'a pas été achetée
@@ -246,7 +246,7 @@ public class Partie {
     public void caseDepart(){
         // Reçoit 200 $
         System.out.println("Vous passez par la case depart ! \n Recevez 200 $ !");
-        listeJoueurs[tourJoueur].incrCapital(SommeDepart);
+        listeJoueurs[tourJoueur].incrCapital(SOMME_DEPART);
     }
 
     public void tirageCaisseCommunaute(String Action) throws InsufficientFundsException {
@@ -324,26 +324,6 @@ public class Partie {
 
     public void incrTourGolbal() {
         tourGolbal++;
-    }
-
-    public void reglerMontantLoyer(Joueur payeur, Joueur receveur, IPossession bien) throws InsufficientFundsException {
-        switch(bien.getClass().getSimpleName()){
-            case "Propriete":
-                Map<Integer, Integer> sommeVersePropriete = payeur.payerMontant(bien.calculerLoyer());
-                receveur.incrCapital(sommeVersePropriete);
-                break;
-            case "Gare":
-                // loyer gare = 25 -50 -100 -200 = 25 * 2^(nb_gare-1)
-                Map<Integer, Integer> sommeVerseGare = payeur.payerMontant((int)(Math.pow(2,receveur.getNbGare()-1))*bien.calculerLoyer());
-                receveur.incrCapital(sommeVerseGare);
-                break;
-            case "ServicePublic":
-                Map<Integer, Integer> sommeVerseService = payeur.payerMontant(eventService(receveur.getNbService()));
-                break;
-            default:
-                System.out.println("Erreur dans le type de bien");
-                break;
-        }
     }
 
     public void remplirDeckChance() {
@@ -428,7 +408,7 @@ public class Partie {
 
         for (Joueur joueur : listeJoueurs) {
             if (joueur != donneur) {
-                Map<Integer, Integer> somme = donneur.decrCapital(part);
+                int somme = donneur.decrCapital(part);
                 joueur.incrCapital(somme);
             }
         }
@@ -437,7 +417,7 @@ public class Partie {
     public void creditJoueur(int total, Joueur receveur) throws InsufficientFundsException {
         for (Joueur joueur : listeJoueurs) {
             if (joueur != receveur) {
-                Map<Integer, Integer> somme = joueur.decrCapital(total);
+                int somme = joueur.decrCapital(total);
                 receveur.incrCapital(somme);
             }
         }
@@ -665,5 +645,9 @@ public class Partie {
                 // autres cases
                 break;
         }
+    }
+
+    public void choixAmelioration(Propriete propriete) {
+        listeJoueurs[tourJoueur].AmeliorationPropriete(propriete);
     }
 }

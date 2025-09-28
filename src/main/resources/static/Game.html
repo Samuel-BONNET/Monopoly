@@ -109,13 +109,6 @@
     <button class="close-btn" id="fermerMenuBanque">&times;</button>
     <h3>Banque</h3>
     <p>Capital total : 1 500 $</p>
-    <p>Billets de 500 :</p>
-    <p>Billets de 100 :</p>
-    <p>Billets de 50 :</p>
-    <p>Billets de 20 :</p>
-    <p>Billets de 10 :</p>
-    <p>Billets de 5 :</p>
-    <p>Billets de 1 :</p>
 </div>
 
 <!-- Affichage plateau -->
@@ -130,11 +123,33 @@
     <h4 id="message"></h4>
 </div>
 
+<!-- overlay qui bloque les clics derrière la modale -->
+<div id="miniMenuOverlay" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.35); /* tu peux mettre 0 si tu veux totalement transparent */
+    z-index:199;
+"></div>
+
 <!-- Menu Choix achat-->
-<div id="miniMenuAchat" style="display:none; position:absolute; padding:15px; background:#fff; border:2px solid #222; border-radius:10px; z-index:200;">
+<div id="miniMenuAchat" style="
+    display:none;
+    position:fixed;      /* fixed pour rester centré même si scroll */
+    padding:15px;
+    background:#fff;
+    border:2px solid #222;
+    border-radius:10px;
+    z-index:200;
+    width:320px;
+    max-width:90vw;
+    box-shadow:0 6px 20px rgba(0,0,0,0.2);
+">
     <p id="miniMenuText">Voulez-vous acheter cette propriété ?</p>
-    <button id="achatOuiBtn">Oui</button>
-    <button id="achatNonBtn">Non</button>
+    <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="achatOuiBtn">Oui</button>
+        <button id="achatNonBtn">Non</button>
+    </div>
 </div>
 
 
@@ -142,7 +157,6 @@
 <div id="controls">
     <button id="rollBtn">Lancer Dés</button>
     <button id="endTurnBtn">Fin de Tour</button>
-    <button id="achatBtn">Acheter</button>
 </div>
 
 <!-- Affichage Cartes Chance / Communauté -->

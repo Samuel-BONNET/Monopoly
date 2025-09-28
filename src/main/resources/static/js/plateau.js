@@ -108,44 +108,102 @@ document.getElementById("rollBtn").addEventListener("click", async () => {
 
 // --- Mini Menu Achat ---
 function showAchatMenu(joueur, caseNum) {
-    // Crée le menu
-    let menu = document.createElement("div");
-    menu.id = "achatMenu";
-    menu.style.position = "absolute";
+    const overlay = document.getElementById("miniMenuOverlay");
+    const menu = document.getElementById("miniMenuAchat");
+    const txt = document.getElementById("miniMenuText");
+    const btnOui = document.getElementById("achatOuiBtn");
+    const btnNon = document.getElementById("achatNonBtn");
+
+    if (!overlay || !menu || menu.style.display === "block") return;
+
+    const nomCase = (typeof plateau !== "undefined" && plateau[caseNum] && plateau[caseNum].nom) ? plateau[caseNum].nom : "cette propriété";
+    txt.textContent = `${joueur.nom}, voulez-vous acheter ${nomCase} ?`;
+
+    overlay.style.display = "block";
+    menu.style.display = "block";
+
     menu.style.top = "50%";
     menu.style.left = "50%";
     menu.style.transform = "translate(-50%, -50%)";
-    menu.style.background = "#fff";
-    menu.style.border = "2px solid #000";
-    menu.style.padding = "20px";
-    menu.style.zIndex = "200";
-    menu.style.textAlign = "center";
 
-    menu.innerHTML = `
-        <p>${joueur.nom}, voulez-vous acheter cette propriété ?</p>
-        <button id="achatOui">Oui</button>
-        <button id="achatNon">Non</button>
-    `;
+    const controls = ["rollBtn", "endTurnBtn", "achatBtn"];
+    controls.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.dataset.wasDisabled = el.disabled ? "true" : "false";
+        el.disabled = true;
+    });
 
-    document.body.appendChild(menu);
+    btnOui.focus();
 
-    document.getElementById("achatOui").addEventListener("click", async () => {
-        // Achat côté serveur
-        const res = await fetch(`/api/buy/${caseNum}`, { method: "POST" });
-        if (res.ok) {
-            document.getElementById("message").textContent = `${joueur.nom} a acheté la propriété !`;
-            await loadJoueurs();
-        } else {
-            document.getElementById("message").textContent = `Erreur lors de l'achat`;
+    const onOverlayClick = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+    };
+    overlay.addEventListener("click", onOverlayClick, { passive: false });
+
+    // Handlers
+    let cleanup = () => {
+        overlay.style.display = "none";
+        menu.style.display = "none";
+        overlay.removeEventListener("click", onOverlayClick);
+
+
+        controls.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.disabled = (el.dataset.wasDisabled === "true");
+            delete el.dataset.wasDisabled;
+        });
+
+
+        btnOui.removeEventListener("click", onOui);
+        btnNon.removeEventListener("click", onNon);
+    };
+
+    async function onOui() {
+
+        btnOui.disabled = true;
+        btnNon.disabled = true;
+
+        try {
+            const res = await fetch(`/api/buy/${caseNum}`, { method: "POST" });
+            if (res.ok) {
+                document.getElementById("message").textContent = `${joueur.nom} a acheté ${nomCase} !`;
+                await loadJoueurs();
+            } else {
+                const txtErr = await res.text().catch(()=>"Erreur serveur");
+                document.getElementById("message").textContent = `Erreur lors de l'achat : ${txtErr}`;
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById("message").textContent = "Erreur réseau lors de l'achat.";
+        } finally {
+            cleanup();
         }
-        menu.remove();
-    });
+    }
 
-    document.getElementById("achatNon").addEventListener("click", () => {
-        menu.remove();
+    function onNon() {
         document.getElementById("message").textContent = `${joueur.nom} passe son tour.`;
-    });
+        cleanup();
+    }
+
+    btnOui.addEventListener("click", onOui);
+    btnNon.addEventListener("click", onNon);
+
+
+    const keyHandler = (e) => {
+        if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); }
+    };
+    document.addEventListener("keydown", keyHandler);
+
+    const oldCleanup = cleanup;
+    cleanup = () => {
+        document.removeEventListener("keydown", keyHandler);
+        oldCleanup();
+    };
 }
+
 
 // --- Fin de tour ---
 document.getElementById("endTurnBtn").addEventListener("click", async () => {
