@@ -126,4 +126,8 @@ public class GameService {
         partie.tirageCaisseCommunaute(carte.getAFaire());
     }
 
+    public int getMoney(){
+        return partie.getJoueurAJouer().getCapitalTotal();
+    }
+
 }

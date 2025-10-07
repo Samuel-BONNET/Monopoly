@@ -46,8 +46,8 @@ public class GameController {
     }
 
     @GetMapping("/plateau")
-    public List<ICase> getPlateau() {
-        return gameService.getPlateau().getTotalCase();
+    public Plateau getPlateau() {
+        return gameService.getPlateau();
     }
 
     @GetMapping("/plateau/{id}")
@@ -79,6 +79,7 @@ public class GameController {
     public int getTourJoueur() {
         return gameService.getTourJoueur();
     }
+
     @GetMapping("/joueurAJouer")
     public Joueur getJoueurAjouer() {
         return gameService.getJoueurAJouer();
@@ -92,6 +93,11 @@ public class GameController {
     @GetMapping("/money/{id}")
     public int getMoney(@PathVariable int id){
         return gameService.getJoueurs()[getJoueur(id)].getCapitalTotal();
+    }
+
+    @GetMapping("/money")
+    public int getActualMoney(){
+        return gameService.getMoney();
     }
 
     @PostMapping("/deplacer/{joueurIndex}/{nbCases}")

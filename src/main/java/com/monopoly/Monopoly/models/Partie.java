@@ -423,18 +423,19 @@ public class Partie {
         }
     }
 
-    public void acheter(IPossession bienAVendre) throws InsufficientFundsException {
-        System.out.println("Souhaitez-vous acheter : " + bienAVendre.getNom() + " pour " + bienAVendre.getPrixAchat() + " ? (oui/non)");
-
-        if (traitementReponse(sc)) {
-            Joueur joueur = listeJoueurs[tourJoueur];
-            if (joueur.getCapitalTotal() >= bienAVendre.getPrixAchat()) {
-                joueur.decrCapital(bienAVendre.getPrixAchat());
-                listePossessionJoueur.put(bienAVendre, joueur);
-                System.out.println(joueur.getNom() + " a acheté " + bienAVendre.getNom() + " !");
-            } else {
-                System.out.println("Fonds insuffisants pour acheter " + bienAVendre.getNom());
-            }
+    public String acheter(IPossession bienAVendre) {
+        if(bienAVendre.getProprietaire() != null){
+            return "Cette propriété appartient déjà à un autre joueur.";
+        }
+        Joueur jcourrant = listeJoueurs[tourJoueur];
+        if (jcourrant.getCapitalTotal()< bienAVendre.getPrixAchat()){
+            return "Fonds insuffisants pour acheter " + bienAVendre.getNom();
+        }
+        else {
+            bienAVendre.setProprietaire(jcourrant);
+            jcourrant.decrCapital(bienAVendre.getPrixAchat());
+            listePossessionJoueur.put(bienAVendre, jcourrant);
+            return jcourrant.getNom() + " vient de faire l'acquisition de " + bienAVendre.getNom() + " !";
         }
     }
 

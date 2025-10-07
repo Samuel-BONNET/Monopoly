@@ -169,7 +169,7 @@ function showAchatMenu(joueur, caseNum) {
         try {
             const res = await fetch(`/api/buy/${caseNum}`, { method: "POST" });
             if (res.ok) {
-                document.getElementById("message").textContent = `${joueur.nom} a acheté ${nomCase} !`;
+                document.getElementById("message").textContent = `${res.text()}`;
                 await loadJoueurs();
             } else {
                 const txtErr = await res.text().catch(()=>"Erreur serveur");
@@ -181,6 +181,7 @@ function showAchatMenu(joueur, caseNum) {
         } finally {
             cleanup();
         }
+        refreshMoney();
     }
 
     function onNon() {
@@ -202,6 +203,21 @@ function showAchatMenu(joueur, caseNum) {
         document.removeEventListener("keydown", keyHandler);
         oldCleanup();
     };
+}
+
+// Refresh Money
+function refreshMoney() {
+    const moneySpan = document.getElementById("valeurBanque");
+    const res = fetch("api/money")
+    if (!res.ok) {
+        console.error("Erreur lors de la récupération de l'argent");
+        return;
+    }
+    else{
+        const money = res.json();
+        moneySpan.textContent = `${money}`;
+    }
+
 }
 
 

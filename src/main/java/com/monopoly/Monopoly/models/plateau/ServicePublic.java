@@ -1,15 +1,19 @@
 package com.monopoly.Monopoly.models.plateau;
 
+import com.monopoly.Monopoly.models.Joueur;
+
 public class ServicePublic implements IPossession {
 
     private static int compteur = 0;
     private int id, numero, prix;
     private String nom;
+    private Joueur proprietaire;
 
     ServicePublic(int id, String nom) {
         this.id = id;
         this.nom = nom;
         this.prix = 150;
+        this.proprietaire = null;
     }
 
     ServicePublic(String nom) {
@@ -47,5 +51,13 @@ public class ServicePublic implements IPossession {
     public int calculerLoyer() {
         // ne rien faire
         return 0;
+    }
+
+    public Joueur getProprietaire() {
+        return this.proprietaire;
+    }
+
+    public void setProprietaire(Joueur joueur){
+        this.proprietaire = joueur;
     }
 }

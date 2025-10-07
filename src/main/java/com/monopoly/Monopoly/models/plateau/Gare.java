@@ -1,6 +1,7 @@
 package com.monopoly.Monopoly.models.plateau;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.monopoly.Monopoly.models.Joueur;
 
 public class Gare implements IPossession {
 
@@ -11,11 +12,13 @@ public class Gare implements IPossession {
     private static int compteur = 0;
     private boolean estHypotheque = false;
     private int prix;
+    private Joueur proprietaire;
 
     Gare(int id, String nom) {
         this.id = id;
         this.nom = nom;
         this.prix = 200;
+        this.proprietaire = null;
     }
 
     Gare(String nom) {
@@ -50,7 +53,13 @@ public class Gare implements IPossession {
         this.estHypotheque = estHypotheque;
     }
 
+    public Joueur getProprietaire() {
+        return this.proprietaire;
+    }
 
+    public void setProprietaire(Joueur proprietaire) {
+        this.proprietaire = proprietaire;
+    }
 
     public int calculerLoyer() {
         return 25; // Le loyer de base pour une gare est de 25
