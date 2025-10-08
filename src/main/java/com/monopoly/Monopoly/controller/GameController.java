@@ -34,6 +34,11 @@ public class GameController {
         return gameService.rollDice();
     }
 
+    @GetMapping("/nbRoll")
+    public int getNbRoll() {
+        return gameService.getNbRoll();
+    }
+
     @PostMapping("/finTour")
     public Joueur finTour() {
         Joueur joueur = gameService.finTour();

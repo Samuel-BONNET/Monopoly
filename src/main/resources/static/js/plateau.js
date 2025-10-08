@@ -77,6 +77,11 @@ document.getElementById("rollBtn").addEventListener("click", async () => {
     const res = await fetch("/api/roll", { method: "POST" });
     const nb = await res.json();
 
+    const resnbRoll = await fetch("/api/nbRolls");
+    const nbRolls = await resnbRoll.json();
+
+    refreshNbRolls();
+
     const resTour = await fetch("/api/tourJoueur");
     const tourJoueur = await resTour.json();
 
@@ -218,6 +223,20 @@ function refreshMoney() {
         moneySpan.textContent = `${money}`;
     }
 
+}
+
+// Refresh Nb Rolls
+function refreshNbRolls(){
+    const nbRollsP = document.getElementById("nbRollRestant");
+    const res = fetch("api/nbRolls")
+    if(!res.ok){
+        console.error("Erreur lors de la récupération du nombre de rolls");
+        return;
+    }
+    else{
+        const nbRolls = res.json();
+        nbRollsP.textContent = `Rolls restants : ${nbRolls}`;
+    }
 }
 
 

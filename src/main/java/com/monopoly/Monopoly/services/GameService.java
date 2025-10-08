@@ -43,13 +43,22 @@ public class GameService {
     }
 
     public int rollDice() {
-        int des1 = partie.lancerDesSimple();
-        int des2 = partie.lancerDesSimple();
-        int total = des1 + des2;
+        if(partie.getJoueurAJouer().getLancerDesRestant()==0){
+            partie.getJoueurAJouerSuivant().incrLancerDes();
+            return 0;
+        }
+        else {
+            int des1 = partie.lancerDesSimple();
+            int des2 = partie.lancerDesSimple();
+            int total = des1 + des2;
 
-        if (des1 == des2) partie.getJoueurAJouer().incrCptDouble(partie.getTourGolbal());
-        partie.getJoueurAJouer().avancer(total);
-        return total;
+            if (des1 == des2) partie.getJoueurAJouer().incrCptDouble(partie.getTourGolbal());
+            partie.getJoueurAJouer().avancer(total);
+            partie.getJoueurAJouer().decrLancerDes();
+            partie.getJoueurAJouerSuivant().incrLancerDes();
+            return total;
+        }
+
     }
 
     public Joueur finTour() {
@@ -128,6 +137,10 @@ public class GameService {
 
     public int getMoney(){
         return partie.getJoueurAJouer().getCapitalTotal();
+    }
+
+    public int getNbRoll(){
+        return partie.getJoueurAJouer().getLancerDesRestant();
     }
 
 }

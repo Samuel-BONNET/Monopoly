@@ -651,4 +651,8 @@ public class Partie {
     public void choixAmelioration(Propriete propriete) {
         listeJoueurs[tourJoueur].AmeliorationPropriete(propriete);
     }
+
+    public Joueur getJoueurAJouerSuivant(){
+        return listeJoueurs[(tourJoueur+1)%nbJoueur];
+    }
 }
