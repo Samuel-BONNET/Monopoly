@@ -234,21 +234,6 @@ function refreshMoney() {
 
 }
 
-// Refresh Nb Rolls
-function refreshNbRolls(){
-    const nbRollsP = document.getElementById("nbRollRestant");
-    const res = fetch("api/nbRoll")
-    if(!res.ok){
-        console.error("Erreur lors de la récupération du nombre de rolls");
-        return;
-    }
-    else{
-        const nbRolls = res.json();
-        nbRollsP.textContent = `Rolls restants : ${nbRolls}`;
-    }
-}
-
-
 // --- Fin de tour ---
 document.getElementById("endTurnBtn").addEventListener("click", async () => {
     await fetch("/api/finTour", { method: "POST" });
