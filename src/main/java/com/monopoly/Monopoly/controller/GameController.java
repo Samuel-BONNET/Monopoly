@@ -30,13 +30,23 @@ public class GameController {
     }
 
     @PostMapping("/roll")
-    public int rollDice() {
+    public int[] rollDice() {
         return gameService.rollDice();
     }
 
     @GetMapping("/nbRoll")
     public int getNbRoll() {
         return gameService.getNbRoll();
+    }
+
+    @GetMapping("/incrNbRoll")
+    public int incrNbRoll() {
+        return gameService.incrNbRoll();
+    }
+
+    @GetMapping("/decrNbRoll")
+    public int decrNbRoll() {
+        return gameService.decrNbRoll();
     }
 
     @PostMapping("/finTour")
@@ -51,8 +61,8 @@ public class GameController {
     }
 
     @GetMapping("/plateau")
-    public Plateau getPlateau() {
-        return gameService.getPlateau();
+    public ICase[] getPlateau() {
+        return gameService.getPlateau().toArray(ICase[]::new);
     }
 
     @GetMapping("/plateau/{id}")

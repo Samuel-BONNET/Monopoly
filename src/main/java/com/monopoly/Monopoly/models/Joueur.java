@@ -15,7 +15,7 @@ import com.monopoly.Monopoly.models.plateau.Propriete;
 public class Joueur {
     public Scanner scan;
     private static int compteur_id = 0;
-    private int id, caseActuelle = 0, capitalTotal = 1500, nbPropriete = 0, nbMaison = 0, nbHotel = 0, nbGare =0, nbService = 0, tourEntrePrison, cptDouble = 0, lancerDesRestant = 0;;
+    private int id, caseActuelle = 0, capitalTotal = 1500, nbPropriete = 0, nbMaison = 0, nbHotel = 0, nbGare =0, nbService = 0, tourEntrePrison, cptDouble = 0, lancerDesRestant = 1 ;
     private String nom, pion;
     private Propriete[] listeProprietes = new Propriete[25];// nb max de propriétés
     private boolean estEnPrison = false, estEliminer = false;
@@ -60,12 +60,14 @@ public class Joueur {
         return lancerDesRestant;
     }
 
-    public void incrLancerDes(){
-        lancerDesRestant++;
+    public int incrLancerDes(){
+        if(lancerDesRestant < 1) lancerDesRestant++;
+        return lancerDesRestant;
     }
 
-    public void decrLancerDes(){
-        lancerDesRestant--;
+    public int decrLancerDes(){
+        if(lancerDesRestant > 0) lancerDesRestant--;
+        return lancerDesRestant;
     }
 
     public int getCaseActuelle() {

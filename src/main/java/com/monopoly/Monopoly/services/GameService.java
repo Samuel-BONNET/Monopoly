@@ -15,7 +15,7 @@ import java.util.Map;
 public class GameService {
 
     private Partie partie;
-    private Plateau plateau = new Plateau();
+    private Plateau plateau;
     private List<Joueur> joueurs = List.of(
             new Joueur("Alice", "♙"),
             new Joueur("Bob", "♕"),
@@ -25,7 +25,7 @@ public class GameService {
 
     public GameService() {
         this.partie = new Partie(4);
-        this.partie.getPlateau();
+        this.plateau = this.partie.getPlateau();
         partie.creationJoueur(1,"Alice","♙");
         partie.creationJoueur(2,"Bob","♕");
         partie.creationJoueur(3,"Charlie","♠");
@@ -42,18 +42,18 @@ public class GameService {
         return state;
     }
 
-    public int rollDice() {
+    public int[] rollDice() {
         if(partie.getJoueurAJouer().getLancerDesRestant()==0){
             partie.getJoueurAJouerSuivant().incrLancerDes();
-            return 0;
+            return null;
         }
         else {
             int des1 = partie.lancerDesSimple();
             int des2 = partie.lancerDesSimple();
-            int total = des1 + des2;
+            int[] total = {des1, des2};
 
             if (des1 == des2) partie.getJoueurAJouer().incrCptDouble(partie.getTourGolbal());
-            partie.getJoueurAJouer().avancer(total);
+            partie.getJoueurAJouer().avancer(total[0] + total[1]);
             partie.getJoueurAJouer().decrLancerDes();
             partie.getJoueurAJouerSuivant().incrLancerDes();
             return total;
@@ -76,8 +76,8 @@ public class GameService {
         }
     }
 
-    public Plateau getPlateau() {
-        return partie.getPlateau();
+    public List<ICase> getPlateau() {
+        return partie.getPlateau().getTotalCase();
     }
 
     public ICase getPlateauId(int id) {
@@ -141,6 +141,14 @@ public class GameService {
 
     public int getNbRoll(){
         return partie.getJoueurAJouer().getLancerDesRestant();
+    }
+
+    public int incrNbRoll(){
+        return partie.getJoueurAJouer().incrLancerDes();
+    }
+
+    public int decrNbRoll(){
+        return partie.getJoueurAJouer().decrLancerDes();
     }
 
 }

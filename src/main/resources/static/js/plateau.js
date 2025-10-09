@@ -74,41 +74,50 @@ async function initGame() {
 
 // --- Lancer dés ---
 document.getElementById("rollBtn").addEventListener("click", async () => {
-    const res = await fetch("/api/roll", { method: "POST" });
-    const nb = await res.json();
+    const resNbRolls = await fetch("/api/nbRoll");
+    const nbRolls = await resNbRolls.json();
 
-    const resnbRoll = await fetch("/api/nbRolls");
-    const nbRolls = await resnbRoll.json();
-
-    refreshNbRolls();
-
-    const resTour = await fetch("/api/tourJoueur");
-    const tourJoueur = await resTour.json();
-
-    await fetch(`/api/deplacer/${tourJoueur}/${nb}`, { method: 'POST' });
-    await loadJoueurs();
-
-    const joueur = joueurs[tourJoueur];
-    document.getElementById("message").innerHTML =
-        `Lancé de dés : ${nb}<br>Vous avancez jusqu'à ${joueur.caseActuelle}.`;
-
-    // --- Vérification propriété pour menu achat ---
-    const caseActu = joueur.caseActuelle;
-    const verifRes = await fetch(`/api/estPropriete/${caseActu}`);
-    const estPropriete = await verifRes.json();
-
-    if (estPropriete) {
-        showAchatMenu(joueur, caseActu);
+    if(nbRolls <= 0){
+        document.getElementById("message").textContent = "Vous n'avez plus de rolls restants pour ce tour.";
+        return;
     }
-    const caseData = plateau[caseActu];
-    if (caseData.type === "CaseEvenement" && caseData.nom.toUpperCase().includes("CHANCE")) {
-        await caseCarte("CHANCE");
-    }
-    if (caseData.type === "CaseEvenement" && caseData.nom.toUpperCase().includes("COMMUNAUTE")) {
-        await caseCarte("COMMUNAUTE");
-    }
+    else {
+        const res = await fetch("/api/roll", {method: "POST"});
+        const nb = await res.json();
 
+        document.getElementById("resultat_des_1").textContent = nb[0];
+        document.getElementById("resultat_des_2").textContent = nb[1];
 
+        decrNbRoll();
+
+        //refreshNbRolls();
+
+        const resTour = await fetch("/api/tourJoueur");
+        const tourJoueur = await resTour.json();
+
+        await fetch(`/api/deplacer/${tourJoueur}/${nb[0] + nb[1]}`, {method: 'POST'});
+        await loadJoueurs();
+
+        const joueur = joueurs[tourJoueur];
+        document.getElementById("message").innerHTML =
+            `Vous avancez jusqu'à ${joueur.caseActuelle}.`; // todo a fix, pour avoir le nom de la case
+
+        // --- Vérification propriété pour menu achat ---
+        const caseActu = joueur.caseActuelle;
+        const verifRes = await fetch(`/api/estPropriete/${caseActu}`);
+        const estPropriete = await verifRes.json();
+
+        if (estPropriete) {
+            showAchatMenu(joueur, caseActu);
+        }
+        const caseData = plateau[caseActu];
+        if (caseData.type === "CaseEvenement" && caseData.nom.toUpperCase().includes("CHANCE")) {
+            await caseCarte("CHANCE");
+        }
+        if (caseData.type === "CaseEvenement" && caseData.nom.toUpperCase().includes("COMMUNAUTE")) {
+            await caseCarte("COMMUNAUTE");
+        }
+    }
 });
 
 // --- Mini Menu Achat ---
@@ -228,7 +237,7 @@ function refreshMoney() {
 // Refresh Nb Rolls
 function refreshNbRolls(){
     const nbRollsP = document.getElementById("nbRollRestant");
-    const res = fetch("api/nbRolls")
+    const res = fetch("api/nbRoll")
     if(!res.ok){
         console.error("Erreur lors de la récupération du nombre de rolls");
         return;
@@ -244,10 +253,34 @@ function refreshNbRolls(){
 document.getElementById("endTurnBtn").addEventListener("click", async () => {
     await fetch("/api/finTour", { method: "POST" });
     await loadJoueurs();
+    incrNbRoll();
     const joueurRes = await fetch("/api/joueurAJouer");
     const joueur = await joueurRes.json();
     document.getElementById("currentPlayer").textContent = `C'est au tour de ${joueur.nom}`;
+
 });
+
+async function incrNbRoll() {
+    const nbRollsP = document.getElementById("nbRollRestant");
+    const res = await fetch("api/incrNbRoll");
+    if (!res.ok) {
+        console.error("Erreur lors de l'incrémentation du nombre de rolls");
+        return;
+    } else {
+        nbRollsP.textContent = await res.text();
+    }
+}
+
+async function decrNbRoll() {
+    const nbRollsP = document.getElementById("nbRollRestant");
+    const res = await fetch("api/decrNbRoll");
+    if (!res.ok) {
+        console.error("Erreur lors de la décrémentation du nombre de rolls");
+        return;
+    } else {
+        nbRollsP.textContent = await res.text();
+    }
+}
 
 async function caseCarte(caseType) {
     if (caseType === "CHANCE") {

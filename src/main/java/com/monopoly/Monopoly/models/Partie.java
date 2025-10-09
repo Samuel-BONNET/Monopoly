@@ -8,7 +8,7 @@ import java.util.*;
 
 public class Partie {
 
-    private int nbJoueur, tourGolbal = 1, tourJoueur = 1, carteChanceTirees = 0, carteCommunauteTirees = 0;
+    private int nbJoueur, tourGolbal = 0, tourJoueur = 0, carteChanceTirees = 0, carteCommunauteTirees = 0;
     private boolean victoire = false;
     private Joueur carteChanceSortiPrisonEnJeu = null;
     private Joueur carteCommunauteSortiPrisonEnJeu  = null;
