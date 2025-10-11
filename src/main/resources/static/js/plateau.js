@@ -47,19 +47,64 @@ function drawPions() {
 }
 
 function getCasePosition(numCase) {
-    const size = 60, total = 11 * size;
+    const size = 60;
+    const total = 11 * size;
     let x = 0, y = 0;
-    if (numCase === 0) { x = total - size; y = total - size; }
-    else if (numCase > 0 && numCase < 10) { x = total - size * (numCase + 1); y = total - size; }
-    else if (numCase === 10) { x = 0; y = total - size; }
-    else if (numCase > 10 && numCase < 20) { x = 0; y = total - size - size * (numCase - 10); }
-    else if (numCase === 20) { x = 0; y = 0; }
-    else if (numCase > 20 && numCase < 30) { x = size * (numCase - 20); y = 0; }
-    else if (numCase === 30) { x = total - size; y = 0; }
-    else if (numCase > 30 && numCase < 39) { x = total - size; y = size * (numCase - 30); }
-    else if (numCase === 39) { x = total - size; y = total - 2 * size; }
+
+    switch (true) {
+        case (numCase === 0):
+            x = total - size;
+            y = total - size;
+            break;
+
+        case (numCase > 0 && numCase < 10):
+            x = total - size * (numCase + 1);
+            y = total - size;
+            break;
+
+        case (numCase === 10):
+            x = 0;
+            y = total - size;
+            break;
+
+        case (numCase > 10 && numCase < 20):
+            x = 0;
+            y = total - size - size * (numCase - 10);
+            break;
+
+        case (numCase === 20):
+            x = 0;
+            y = 0;
+            break;
+
+        case (numCase > 20 && numCase < 30):
+            x = size * (numCase - 20);
+            y = 0;
+            break;
+
+        case (numCase === 30):
+            x = total - size;
+            y = 0;
+            break;
+
+        case (numCase > 30 && numCase < 39):
+            x = total - size;
+            y = size * (numCase - 30);
+            break;
+
+        case (numCase === 39):
+            x = total - size;
+            y = total - 2 * size;
+            break;
+
+        default:
+            console.warn("Numéro de case invalide :", numCase);
+            break;
+    }
+
     return { x, y };
 }
+
 
 // --- Init Game ---
 async function initGame() {
@@ -90,8 +135,6 @@ document.getElementById("rollBtn").addEventListener("click", async () => {
 
         decrNbRoll();
 
-        //refreshNbRolls();
-
         const resTour = await fetch("/api/tourJoueur");
         const tourJoueur = await resTour.json();
 
@@ -99,8 +142,11 @@ document.getElementById("rollBtn").addEventListener("click", async () => {
         await loadJoueurs();
 
         const joueur = joueurs[tourJoueur];
-        document.getElementById("message").innerHTML =
-            `Vous avancez jusqu'à ${joueur.caseActuelle}.`; // todo a fix, pour avoir le nom de la case
+        const caseNom = plateau[joueur.caseActuelle]?.nom || "une case inconnue";
+        document.getElementById("message").textContent = `Vous avancez jusqu'à ${caseNom}.`;
+
+
+
 
         // --- Vérification propriété pour menu achat ---
         const caseActu = joueur.caseActuelle;
@@ -109,19 +155,30 @@ document.getElementById("rollBtn").addEventListener("click", async () => {
 
         if (estPropriete) {
             showAchatMenu(joueur, caseActu);
+            return;
         }
         const caseData = plateau[caseActu];
         if (caseData.type === "CaseEvenement" && caseData.nom.toUpperCase().includes("CHANCE")) {
             await caseCarte("CHANCE");
+            return;
         }
         if (caseData.type === "CaseEvenement" && caseData.nom.toUpperCase().includes("COMMUNAUTE")) {
             await caseCarte("COMMUNAUTE");
+            return;
+        }
+        else{
+            await caseEvenement(caseActu);
         }
     }
 });
 
-// --- Mini Menu Achat ---
-function showAchatMenu(joueur, caseNum) {
+// --- Action Autres Cases ---
+async function caseEvenement(caseData){
+    const res = await fetch(`/api/actionCase${caseData}`)
+    const actionJoueur = res.text();
+    document.getElementById("actionCoup").textContent = actionJoueur;
+}
+async function showAchatMenu(joueur, caseNum) {
     const overlay = document.getElementById("miniMenuOverlay");
     const menu = document.getElementById("miniMenuAchat");
     const txt = document.getElementById("miniMenuText");
@@ -130,64 +187,73 @@ function showAchatMenu(joueur, caseNum) {
 
     if (!overlay || !menu || menu.style.display === "block") return;
 
-    const nomCase = (typeof plateau !== "undefined" && plateau[caseNum] && plateau[caseNum].nom) ? plateau[caseNum].nom : "cette propriété";
+    const nomCase = plateau[caseNum]?.nom ?? "cette propriété";
     txt.textContent = `${joueur.nom}, voulez-vous acheter ${nomCase} ?`;
 
     overlay.style.display = "block";
     menu.style.display = "block";
-
     menu.style.top = "50%";
     menu.style.left = "50%";
     menu.style.transform = "translate(-50%, -50%)";
 
+    // Désactivation des contrôles
     const controls = ["rollBtn", "endTurnBtn", "achatBtn"];
     controls.forEach(id => {
         const el = document.getElementById(id);
-        if (!el) return;
-        el.dataset.wasDisabled = el.disabled ? "true" : "false";
-        el.disabled = true;
+        if (el) {
+            el.dataset.wasDisabled = el.disabled ? "true" : "false";
+            el.disabled = true;
+        }
     });
 
     btnOui.focus();
 
-    const onOverlayClick = (e) => {
+    // Empêche la fermeture du menu sur clic overlay
+    const onOverlayClick = e => {
         e.stopPropagation();
         e.preventDefault();
     };
     overlay.addEventListener("click", onOverlayClick, { passive: false });
 
-    // Handlers
-    let cleanup = () => {
+    // Nettoyage global
+    const cleanup = () => {
         overlay.style.display = "none";
         menu.style.display = "none";
         overlay.removeEventListener("click", onOverlayClick);
-
+        document.removeEventListener("keydown", keyHandler);
 
         controls.forEach(id => {
             const el = document.getElementById(id);
-            if (!el) return;
-            el.disabled = (el.dataset.wasDisabled === "true");
-            delete el.dataset.wasDisabled;
+            if (el) {
+                el.disabled = el.dataset.wasDisabled === "true";
+                delete el.dataset.wasDisabled;
+            }
         });
-
 
         btnOui.removeEventListener("click", onOui);
         btnNon.removeEventListener("click", onNon);
     };
 
+    // Gestion achat
     async function onOui() {
-
         btnOui.disabled = true;
         btnNon.disabled = true;
 
         try {
-            const res = await fetch(`/api/buy/${caseNum}`, { method: "POST" });
+            const res = await fetch(`/api/buy/${caseNum}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ joueurId: joueur.id })
+            });
+
+            const txtRes = await res.text();
+
             if (res.ok) {
-                document.getElementById("message").textContent = `${res.text()}`;
+                document.getElementById("message").textContent = txtRes;
                 await loadJoueurs();
+                refreshMoney();
             } else {
-                const txtErr = await res.text().catch(()=>"Erreur serveur");
-                document.getElementById("message").textContent = `Erreur lors de l'achat : ${txtErr}`;
+                document.getElementById("message").textContent = `Erreur lors de l'achat : ${txtRes}`;
             }
         } catch (err) {
             console.error(err);
@@ -195,7 +261,6 @@ function showAchatMenu(joueur, caseNum) {
         } finally {
             cleanup();
         }
-        refreshMoney();
     }
 
     function onNon() {
@@ -203,33 +268,29 @@ function showAchatMenu(joueur, caseNum) {
         cleanup();
     }
 
+    // Événements
     btnOui.addEventListener("click", onOui);
     btnNon.addEventListener("click", onNon);
 
-
-    const keyHandler = (e) => {
-        if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); }
+    const keyHandler = e => {
+        if (e.key === "Escape") {
+            e.preventDefault();
+            cleanup();
+        }
     };
     document.addEventListener("keydown", keyHandler);
-
-    const oldCleanup = cleanup;
-    cleanup = () => {
-        document.removeEventListener("keydown", keyHandler);
-        oldCleanup();
-    };
 }
 
 // Refresh Money
-function refreshMoney() {
+async function refreshMoney() {
     const moneySpan = document.getElementById("valeurBanque");
-    const res = fetch("api/money")
+    const res = await fetch("api/money")
     if (!res.ok) {
         console.error("Erreur lors de la récupération de l'argent");
         return;
     }
     else{
-        const money = res.json();
-        moneySpan.textContent = `${money}`;
+        moneySpan.textContent =  await res.text();
     }
 
 }

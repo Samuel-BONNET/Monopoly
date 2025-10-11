@@ -151,4 +151,7 @@ public class GameService {
         return partie.getJoueurAJouer().decrLancerDes();
     }
 
+    public String actionCase(ICase caseActu) throws InsufficientFundsException {
+        return partie.caseEvenement(caseActu);
+    }
 }

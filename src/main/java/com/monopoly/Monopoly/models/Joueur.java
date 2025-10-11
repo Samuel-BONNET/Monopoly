@@ -189,8 +189,9 @@ public class Joueur {
         return total;
     }
 
-    public void incrCapital(int total){
+    public double incrCapital(int total){
         this.capitalTotal += total; // Actualisation Balance
+        return  total;
     }
 
     public int decrCapital(int total){

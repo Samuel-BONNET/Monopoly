@@ -115,6 +115,18 @@ public class GameController {
         return gameService.getMoney();
     }
 
+    @GetMapping("/decrMoney/{amount}")
+    public double decrActualMoney(@PathVariable int amount){
+        return gameService.getJoueurAJouer().decrCapital(amount);
+    }
+
+    @GetMapping("/incrMoney/{amount}")
+    public double incrActualMoney(@PathVariable int amount){
+        return gameService.getJoueurAJouer().incrCapital(amount);
+    }
+
+    // todo : feat incr/decr specific money
+
     @PostMapping("/deplacer/{joueurIndex}/{nbCases}")
     public void deplacerJoueur(@PathVariable int joueurIndex, @PathVariable int nbCases) throws InsufficientFundsException {
         gameService.deplacerJoueur(joueurIndex, nbCases);
@@ -138,6 +150,11 @@ public class GameController {
     @PostMapping("/ActionCarteCommunaute")
     public void appliquerCarteCommunaute(@RequestBody Carte carte) throws InsufficientFundsException {
         gameService.actionCarteCommunaute(carte);
+    }
+
+    @GetMapping ("/actionCase{id}")
+    public String appliquerCase(@PathVariable ICase caseActu) throws InsufficientFundsException {
+        return gameService.actionCase(caseActu);
     }
 
 }

@@ -41,5 +41,5 @@ L’interface inclut:
 1. **Cloner le projet**
 
 ```bash
-git clone https://github.com/tonusername/monopoly-web.git
+git clone https://github.com/Samuel-BONNET/Monopoly.git
 cd monopoly-web

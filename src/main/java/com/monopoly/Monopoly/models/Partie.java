@@ -216,13 +216,35 @@ public class Partie {
     // 🎯 Gestion Évenements
     // -------------------------------
 
-    public int eventService(int nbService){
-        int[] lance = lancerDesDouble();
-        int total = lance[0] + lance[1];
-        if (nbService == 1){
-            return total*4;
+    public int eventService(int[] valeurDes){
+        int total = valeurDes[0] + valeurDes[1];
+        switch (listeJoueurs[tourJoueur].getNbService()){
+            case 1:
+                return total*4;
+            case 2:
+                return total*10;
+            default:
+                return 0;
         }
-        else return total*10;
+    }
+
+    public String caseEvenement(ICase caseActu) throws InsufficientFundsException {
+        Joueur joueurCourrant = listeJoueurs[tourJoueur];
+        switch(caseActu.getNom()){
+            case "Taxe":
+                if(caseActu.getId() == 4) {
+                    return payerImpot(100);
+                }
+                else{
+                    return payerImpot(200);
+                }
+            case "Prison":
+                return allerPrison(joueurCourrant);
+            case "Parc","Visite-Prison":
+                return "Rien à signaler";
+            default:
+                return "Autre evenement";
+        }
     }
 
     public void casePropriete(Propriete propriete) throws InsufficientFundsException {
@@ -243,10 +265,10 @@ public class Partie {
         }
     }
 
-    public void caseDepart(){
+    public String caseDepart(){
         // Reçoit 200 $
-        System.out.println("Vous passez par la case depart ! \n Recevez 200 $ !");
         listeJoueurs[tourJoueur].incrCapital(SOMME_DEPART);
+        return "Vous passez par la case depart ! \n Recevez 200 $ !";
     }
 
     public void tirageCaisseCommunaute(String Action) throws InsufficientFundsException {
@@ -314,7 +336,7 @@ public class Partie {
 
     public String payerImpot(int total) throws InsufficientFundsException {
         listeJoueurs[tourJoueur].decrCapital(total);
-        return "Payez la somme de :" + total;
+        return "Vous payez la somme de :" + total;
     }
 
     public void incrTourJoueur() {
