@@ -294,6 +294,5 @@ public class Joueur {
 
     public void avancer(int nbCase){
         this.caseActuelle = (this.caseActuelle + nbCase) % 40;
-        System.out.println(caseActuelle + ""+(caseActuelle + nbCase)%40);
     }
 }

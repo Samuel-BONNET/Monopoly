@@ -228,22 +228,20 @@ public class Partie {
         }
     }
 
-    public String caseEvenement(ICase caseActu) throws InsufficientFundsException {
+    public String caseEvenement(int id) throws InsufficientFundsException {
+        ICase caseActu = plateau.getCase(id);
         Joueur joueurCourrant = listeJoueurs[tourJoueur];
         switch(caseActu.getNom()){
-            case "Taxe":
-                if(caseActu.getId() == 4) {
-                    return payerImpot(100);
-                }
-                else{
-                    return payerImpot(200);
-                }
+            case "Impôt sur le revenu":
+                return payerImpot(200);
+            case "Taxe Luxe":
+                return payerImpot(100);
             case "Prison":
                 return allerPrison(joueurCourrant);
             case "Parc","Visite-Prison":
                 return "Rien à signaler";
             default:
-                return "Autre evenement";
+                return "Autre évenement";
         }
     }
 

@@ -126,58 +126,53 @@ document.getElementById("rollBtn").addEventListener("click", async () => {
         document.getElementById("message").textContent = "Vous n'avez plus de rolls restants pour ce tour.";
         return;
     }
-    else {
-        const res = await fetch("/api/roll", {method: "POST"});
-        const nb = await res.json();
 
-        document.getElementById("resultat_des_1").textContent = nb[0];
-        document.getElementById("resultat_des_2").textContent = nb[1];
+    const res = await fetch("/api/roll", {method: "POST"});
+    const nb = await res.json();
 
-        decrNbRoll();
+    document.getElementById("resultat_des_1").textContent = nb[0];
+    document.getElementById("resultat_des_2").textContent = nb[1];
 
-        const resTour = await fetch("/api/tourJoueur");
-        const tourJoueur = await resTour.json();
+    decrNbRoll();
 
-        await fetch(`/api/deplacer/${tourJoueur}/${nb[0] + nb[1]}`, {method: 'POST'});
-        await loadJoueurs();
+    const resTour = await fetch("/api/tourJoueur");
+    const tourJoueur = await resTour.json();
 
-        const joueur = joueurs[tourJoueur];
-        const caseNom = plateau[joueur.caseActuelle]?.nom || "une case inconnue";
-        document.getElementById("message").textContent = `Vous avancez jusqu'à ${caseNom}.`;
+    await fetch(`/api/deplacer/${tourJoueur}/${nb[0] + nb[1]}`, {method: 'POST'});
+    await loadJoueurs();
 
+    const joueur = joueurs[tourJoueur];
+    const caseNom = plateau[joueur.caseActuelle]?.nom || "une case inconnue";
+    document.getElementById("message").textContent = `Vous avancez jusqu'à ${caseNom}.`;
 
+    // --- Vérification propriété pour menu achat ---
+    const caseActu = joueur.caseActuelle;
+    const resProp = await fetch(`/api/estPropriete/${caseActu}`);
+    const estPropriete = await resProp.json();
 
+    if (estPropriete) {
+        showAchatMenu(joueur, caseActu);
+        return;
+    }
 
-        // --- Vérification propriété pour menu achat ---
-        const caseActu = joueur.caseActuelle;
-        const verifRes = await fetch(`/api/estPropriete/${caseActu}`);
-        const estPropriete = await verifRes.json();
+    const nomCase = plateau[caseActu]?.nom?.toLowerCase();
 
-        if (estPropriete) {
-            showAchatMenu(joueur, caseActu);
-            return;
-        }
-        const caseData = plateau[caseActu];
-        if (caseData.type === "CaseEvenement" && caseData.nom.toUpperCase().includes("CHANCE")) {
-            await caseCarte("CHANCE");
-            return;
-        }
-        if (caseData.type === "CaseEvenement" && caseData.nom.toUpperCase().includes("COMMUNAUTE")) {
-            await caseCarte("COMMUNAUTE");
-            return;
-        }
-        else{
-            await caseEvenement(caseActu);
-        }
+    if (caseNom === "Chance" || caseNom === "Ccommunauté") {
+        const bouton = document.getElementById("tirerCarte");
+        bouton.disabled = false;
+    }
+    else{
+        await caseEvenement(caseActu);
     }
 });
 
 // --- Action Autres Cases ---
 async function caseEvenement(caseData){
     const res = await fetch(`/api/actionCase${caseData}`)
-    const actionJoueur = res.text();
+    const actionJoueur = await res.text();
     document.getElementById("actionCoup").textContent = actionJoueur;
 }
+
 async function showAchatMenu(joueur, caseNum) {
     const overlay = document.getElementById("miniMenuOverlay");
     const menu = document.getElementById("miniMenuAchat");
@@ -229,6 +224,9 @@ async function showAchatMenu(joueur, caseNum) {
                 delete el.dataset.wasDisabled;
             }
         });
+
+        btnOui.disabled = false;
+        btnNon.disabled = false;
 
         btnOui.removeEventListener("click", onOui);
         btnNon.removeEventListener("click", onNon);
@@ -303,7 +301,30 @@ document.getElementById("endTurnBtn").addEventListener("click", async () => {
     const joueurRes = await fetch("/api/joueurAJouer");
     const joueur = await joueurRes.json();
     document.getElementById("currentPlayer").textContent = `C'est au tour de ${joueur.nom}`;
+    document.getElementById("actionCoup").textContent = " ";
+});
 
+// --- Tirer Carte ---
+document.getElementById("tirerCarte").addEventListener("click", async () => {
+    const resActu = await fetch("/api/caseActuelle");
+    const caseActu = await resActu.json();
+
+    const caseInfo = plateau[caseActu];
+    if (!caseInfo) return;
+
+    const nomCase = caseInfo.nom.toLowerCase();
+
+    if (nomCase.includes("chance")) {
+        const resChance = await fetch("/api/chance");
+        if (!resChance.ok) return console.error("Erreur récupération carte Chance");
+        const carte = await resChance.json();
+        afficherCarte(carte, "CHANCE");
+    } else if (nomCase.includes("ccommunauté")) {
+        const resCommu = await fetch("/api/communaute");
+        if (!resCommu.ok) return console.error("Erreur récupération carte Communauté");
+        const carte = await resCommu.json();
+        afficherCarte(carte, "COMMUNAUTE");
+    }
 });
 
 async function incrNbRoll() {
@@ -329,24 +350,15 @@ async function decrNbRoll() {
 }
 
 async function caseCarte(caseType) {
-    if (caseType === "CHANCE") {
-        const response = await fetch("/api/chance");
-        if (!response.ok) {
-            console.error("Erreur lors de la récupération d'une carte Chance");
-            return;
-        }
-        const carte = await response.json();
-        afficherCarte(carte, "chance");
-    }
+    let url = caseType === "CHANCE" ? "/api/chance" : "/api/communaute";
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error("Erreur lors de la récupération de la carte");
 
-    if (caseType === "COMMUNAUTE") {
-        const response = await fetch("/api/communaute");
-        if (!response.ok) {
-            console.error("Erreur lors de la récupération d'une carte Caisse de Communauté");
-            return;
-        }
         const carte = await response.json();
-        afficherCarte(carte, "communaute");
+        afficherCarte(carte, caseType);
+    } catch (err) {
+        console.error(err);
     }
 }
 
@@ -356,32 +368,57 @@ function afficherCarte(carte, type) {
     const description = document.getElementById("carteDescription");
     const boutonOk = document.getElementById("carteOk");
 
-    titre.textContent = (type === "chance" ? "Carte Chance" : "Carte Communauté");
-    description.textContent = carte.description;
+    titre.textContent = type === "CHANCE" ? "Carte Chance" : "Carte Communauté";
+    description.textContent = carte.texte;
 
     modal.style.display = "flex";
 
     boutonOk.onclick = async () => {
-        await appliquerActionCarte(carte, type);
+        // Préparer la carte pour le backend
+        const cartePayload = {
+            nom: carte.nom,
+            texte: carte.texte,
+            action: carte.action,
+            value: carte.value,
+            typeCarte: type
+        };
+
+        const url = type === "CHANCE" ? "/api/ActionCarteChance" : "/api/ActionCarteCommunaute";
+        try {
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cartePayload)
+            });
+
+            if (!res.ok) {
+                console.error("Erreur serveur:", await res.text());
+            } else {
+                await updateGameState();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+
         modal.style.display = "none";
     };
 }
 
-async function appliquerActionCarte(carte, type) {
-    const url = type === "chance" ? "/api/ActionCarteChance" : "/api/ActionCarteCommunaute";
-    const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(carte)
-    });
+async function updateGameState() {
 
-    if (!response.ok) {
-        console.error("Erreur lors de l'application de la carte", await response.text());
-    } else {
-        console.log("Carte appliquée avec succès !");
-        await refreshGameState();
+    await loadJoueurs();
+
+    await refreshMoney();
+
+    const resJoueur = await fetch("/api/joueurAJouer");
+    if (resJoueur.ok) {
+        const joueur = await resJoueur.json();
+        document.getElementById("currentPlayer").textContent = `C'est au tour de ${joueur.nom}`;
     }
-}
 
+    drawPions();
+
+    document.getElementById("message").textContent = "État du jeu mis à jour après la carte.";
+}
 
 document.addEventListener("DOMContentLoaded", initGame);

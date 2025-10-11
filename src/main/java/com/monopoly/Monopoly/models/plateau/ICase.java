@@ -2,7 +2,6 @@ package com.monopoly.Monopoly.models.plateau;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.monopoly.Monopoly.models.enums.TypeCarte;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

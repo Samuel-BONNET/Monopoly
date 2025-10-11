@@ -153,8 +153,8 @@ public class GameController {
     }
 
     @GetMapping ("/actionCase{id}")
-    public String appliquerCase(@PathVariable ICase caseActu) throws InsufficientFundsException {
-        return gameService.actionCase(caseActu);
+    public String appliquerCase(@PathVariable int id) throws InsufficientFundsException {
+        return gameService.actionCase(id);
     }
 
 }
