@@ -2,6 +2,7 @@ const boardDiv = document.getElementById("board");
 let plateau = [];
 let joueurs = [];
 let caseDivs = {};
+let joueurCourrant = null;
 
 // --- Plateau & Joueurs ---
 async function loadPlateau() {
@@ -50,121 +51,136 @@ function getCasePosition(numCase) {
     const size = 60;
     const total = 11 * size;
     let x = 0, y = 0;
-
     switch (true) {
-        case (numCase === 0):
-            x = total - size;
-            y = total - size;
-            break;
-
-        case (numCase > 0 && numCase < 10):
-            x = total - size * (numCase + 1);
-            y = total - size;
-            break;
-
-        case (numCase === 10):
-            x = 0;
-            y = total - size;
-            break;
-
-        case (numCase > 10 && numCase < 20):
-            x = 0;
-            y = total - size - size * (numCase - 10);
-            break;
-
-        case (numCase === 20):
-            x = 0;
-            y = 0;
-            break;
-
-        case (numCase > 20 && numCase < 30):
-            x = size * (numCase - 20);
-            y = 0;
-            break;
-
-        case (numCase === 30):
-            x = total - size;
-            y = 0;
-            break;
-
-        case (numCase > 30 && numCase < 39):
-            x = total - size;
-            y = size * (numCase - 30);
-            break;
-
-        case (numCase === 39):
-            x = total - size;
-            y = total - 2 * size;
-            break;
-
-        default:
-            console.warn("Numéro de case invalide :", numCase);
-            break;
+        case (numCase === 0): x = total - size; y = total - size; break;
+        case (numCase > 0 && numCase < 10): x = total - size * (numCase + 1); y = total - size; break;
+        case (numCase === 10): x = 0; y = total - size; break;
+        case (numCase > 10 && numCase < 20): x = 0; y = total - size - size * (numCase - 10); break;
+        case (numCase === 20): x = 0; y = 0; break;
+        case (numCase > 20 && numCase < 30): x = size * (numCase - 20); y = 0; break;
+        case (numCase === 30): x = total - size; y = 0; break;
+        case (numCase > 30 && numCase < 39): x = total - size; y = size * (numCase - 30); break;
+        case (numCase === 39): x = total - size; y = total - 2 * size; break;
+        default: console.warn("Numéro de case invalide :", numCase); break;
     }
-
     return { x, y };
 }
-
 
 // --- Init Game ---
 async function initGame() {
     await loadPlateau();
     await loadJoueurs();
-    const res = await fetch("/api/joueurAJouer");
-    if (res.ok) {
-        const joueur = await res.json();
-        document.getElementById("currentPlayer").textContent = `C'est au tour de ${joueur.nom}`;
-    }
+    await updateGameState();
 }
 
 // --- Lancer dés ---
 document.getElementById("rollBtn").addEventListener("click", async () => {
-    const resNbRolls = await fetch("/api/nbRoll");
-    const nbRolls = await resNbRolls.json();
 
-    if(nbRolls <= 0){
+    const resTour = await fetch("/api/joueurAJouer");
+    const joueurCourrant = await resTour.json();
+
+    // Cas où le Joueur est en prison
+    const resEnPrison = await fetch("/api/enPrison");
+    const prisonStatus = await resEnPrison.json();
+
+    if (prisonStatus.enPrison) {
+        if (prisonStatus.nbToursPrison === 0) {
+            // Premier tour en prison → pas de roll possible
+            document.getElementById("message").textContent = "Premier tour en prison : vous devez passer votre tour.";
+            return;
+        } else {
+            await showPrisonMenu(joueurCourrant);
+            return;
+        }
+    }
+
+    // --- Verif Nb rolls ---
+    const resNbRolls = await fetch("/api/nbRoll");
+    let nbRolls = await resNbRolls.json();
+
+    if (nbRolls === 0) {
         document.getElementById("message").textContent = "Vous n'avez plus de rolls restants pour ce tour.";
         return;
     }
 
-    const res = await fetch("/api/roll", {method: "POST"});
-    const nb = await res.json();
+    // --- Lancer de dés ---
+    const res = await fetch("/api/roll");
+    const rollResult = await res.json();
 
-    document.getElementById("resultat_des_1").textContent = nb[0];
-    document.getElementById("resultat_des_2").textContent = nb[1];
+    document.getElementById("resultat_des_1").textContent = rollResult.des[0];
+    document.getElementById("resultat_des_2").textContent = rollResult.des[1];
 
-    decrNbRoll();
+    // --- Gestion Triple ---
+    if (rollResult.enPrison){
+        document.getElementById("actionCoup").textContent = "Triple double ! Vous allez en prison !";
+        await fetch(`/api/envoyerPrison`, { method: "POST" });
+        await updateGameState();
+        return;
+    }
 
-    const resTour = await fetch("/api/tourJoueur");
-    const tourJoueur = await resTour.json();
+    // --- Gestion double ---
+    if (rollResult.des[0] === rollResult.des[1]) {
+        const resNbDouble = await fetch(`/api/estTripleDouble`);
+        const nbDouble = await resNbDouble.json();
+        document.getElementById("nbDouble").textContent = nbDouble;
+        if (nbDouble < 3) {
+            document.getElementById("double").textContent = "Double ! Vous rejouez.";
+            await incrNbRoll();
+        } else {
+            document.getElementById("double").textContent = "";
+        }
+    }
 
-    await fetch(`/api/deplacer/${tourJoueur}/${nb[0] + nb[1]}`, {method: 'POST'});
+    // --- Déplacement joueur ---
+    await fetch(`/api/deplacer/${rollResult.des[0] + rollResult.des[1]}`, { method: 'POST' });
     await loadJoueurs();
 
-    const joueur = joueurs[tourJoueur];
-    const caseNom = plateau[joueur.caseActuelle]?.nom || "une case inconnue";
+    const caseNom = plateau[joueurCourrant.caseActuelle]?.nom || "une case inconnue";
     document.getElementById("message").textContent = `Vous avancez jusqu'à ${caseNom}.`;
 
     // --- Vérification propriété pour menu achat ---
-    const caseActu = joueur.caseActuelle;
+    const caseActu = joueurCourrant.caseActuelle;
     const resProp = await fetch(`/api/estPropriete/${caseActu}`);
     const estPropriete = await resProp.json();
 
     if (estPropriete) {
-        showAchatMenu(joueur, caseActu);
+        await showAchatMenu(joueurCourrant, caseActu);
         return;
     }
 
-    const nomCase = plateau[caseActu]?.nom?.toLowerCase();
-
     if (caseNom === "Chance" || caseNom === "Ccommunauté") {
-        const bouton = document.getElementById("tirerCarte");
-        bouton.disabled = false;
-    }
-    else{
+        document.getElementById("tirerCarte").disabled = false;
+    } else {
         await caseEvenement(caseActu);
     }
 });
+
+document.getElementById("rollPrisonBtn").addEventListener("click", async () => {
+    // Cache le menu prison
+    document.getElementById("miniMenuPrison").style.display = "none";
+
+    // Lancer les dés via backend
+    const res = await fetch("/api/tenterChancePrison");
+    const des = await res.json(); // [dé1, dé2]
+
+    // Affiche les résultats
+    document.getElementById("resultat_des_1").textContent = des[0];
+    document.getElementById("resultat_des_2").textContent = des[1];
+
+    // Cas double = libéré
+    if (des[0] === des[1]) {
+        document.getElementById("message").textContent =
+            "Vous avez fait un double ! Vous sortez de prison.";
+        await fetch("/api/sortiePrison", { method: "POST" });
+        await updateGameState();
+        return;
+    }
+
+    // Cas pas de double → reste en prison
+    document.getElementById("message").textContent =
+        "Pas de double... Vous restez en prison.";
+});
+
 
 // --- Action Autres Cases ---
 async function caseEvenement(caseData){
@@ -279,28 +295,180 @@ async function showAchatMenu(joueur, caseNum) {
     document.addEventListener("keydown", keyHandler);
 }
 
+async function showPrisonMenu(joueur) {
+    const overlay = document.getElementById("miniMenuOverlay");
+    const menu = document.getElementById("miniMenuPrison");
+    const txt = document.getElementById("miniMenuTextPrison");
+    const rollBtn = document.getElementById("rollPrisonBtn");
+    const payerBtn = document.getElementById("payerBtn");
+
+    if (!overlay || !menu) return;
+
+    // Texte du menu
+    txt.textContent = `${joueur.nom}, vous êtes en prison. Voulez-vous tenter un double pour sortir ou payer 50 € ?`;
+
+    // Affichage centré
+    overlay.style.display = "block";
+    menu.style.display = "block";
+    menu.style.top = "50%";
+    menu.style.left = "50%";
+    menu.style.transform = "translate(-50%, -50%)";
+
+    const resChance = await fetch("/api/peutTenterChance");
+    const peutTenter = await resChance.json();
+
+    if(!peutTenter){
+        rollBtn.disabled = true;
+        txt.textContent = `${joueur.nom}, vous avez déjà tenté 3 fois. Vous devez payer 50 € pour sortir.`;
+    } else {
+        rollBtn.disabled = false;
+    }
+
+    payerBtn.disabled = false;
+    rollBtn.focus();
+
+    // Désactivation de tout sauf roll/payer
+    const controls = ["achatBtn", "endTurnBtn"];
+    controls.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.dataset.wasDisabled = el.disabled ? "true" : "false";
+            el.disabled = true;
+        }
+    });
+
+    // Empêche la fermeture du menu via clic sur overlay
+    const onOverlayClick = e => {
+        e.stopPropagation();
+        e.preventDefault();
+    };
+    overlay.addEventListener("click", onOverlayClick, { passive: false });
+
+    // Nettoyage global
+    const cleanup = () => {
+        overlay.style.display = "none";
+        menu.style.display = "none";
+        overlay.removeEventListener("click", onOverlayClick);
+        document.removeEventListener("keydown", keyHandler);
+
+        controls.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.disabled = el.dataset.wasDisabled === "true";
+                delete el.dataset.wasDisabled;
+            }
+        });
+
+        rollBtn.removeEventListener("click", onRoll);
+        payerBtn.removeEventListener("click", onPay);
+
+        document.getElementById("rollBtn").disabled = false;
+        document.getElementById("endTurnBtn").disabled = false;
+    };
+
+    // --- Gestion roll pour tenter un double ---
+    async function onRoll() {
+        rollBtn.disabled = true;
+        payerBtn.disabled = true;
+        document.getElementById("message").textContent = `${joueur.nom} tente un double pour sortir...`;
+
+        try {
+            const resNbDes = await fetch(`/api/tenterChancePrison`);
+            if (!resNbDes.ok) throw new Error("Erreur serveur lors du lancer des dés");
+
+            const text = await resNbDes.text();
+            let nbDes;
+            try {
+                nbDes = JSON.parse(text);
+            } catch(err) {
+                console.error("Réponse JSON invalide :", text);
+                throw new Error("Impossible de lire les dés depuis la réponse serveur");
+            }
+
+            if (!Array.isArray(nbDes) || nbDes.length < 2 || (nbDes[0] === 0 && nbDes[1] === 0)) {
+                document.getElementById("message").textContent =
+                    `${joueur.nom} n'est pas en prison, lancer ignoré.`;
+                cleanup();
+                return;
+            }
+
+            document.getElementById("resultat_des_1").textContent = nbDes[0];
+            document.getElementById("resultat_des_2").textContent = nbDes[1];
+
+            if (nbDes[0] === nbDes[1]) {
+                document.getElementById("message").textContent = `${joueur.nom} a réussi un double ! Il sort de prison.`;
+                await fetch("/api/sortiePrison", { method: "POST" });
+                await updateGameState(true);
+            } else {
+                document.getElementById("message").textContent = `${joueur.nom} a échoué, il reste en prison.`;
+                await updateGameState();
+            }
+        } catch (err) {
+            console.error(err);
+            document.getElementById("message").textContent = "Erreur lors du lancer.";
+        } finally {
+            cleanup();
+        }
+    }
+
+
+    // --- Gestion paiement ---
+    async function onPay() {
+        rollBtn.disabled = true;
+        payerBtn.disabled = true;
+        document.getElementById("message").textContent = `${joueur.nom} paie 50 € pour sortir de prison.`;
+
+        try {
+            const resAPaye = await fetch(`/api/payerPrison`, { method: "POST" });
+            if(resAPaye){
+                await fetch(`/api/sortiePrison`, {method: "POST"});
+                document.getElementById("actionCoup").textContent = "Vous sortez de prison !"
+            }
+            else{
+                document.getElementById("actionCoup").textContent = "Vous n'avez pas le solde necessaire !"
+            }
+            await updateGameState();
+        } catch (err) {
+            console.error(err);
+            document.getElementById("message").textContent = "Erreur lors du paiement.";
+        } finally {
+            cleanup();
+        }
+    }
+
+    // Attache les événements
+    rollBtn.removeEventListener("click",onRoll);
+    payerBtn.removeEventListener("click",onPay);
+    rollBtn.addEventListener("click", onRoll);
+    payerBtn.addEventListener("click", onPay);
+
+    // Fermeture via Échap
+    const keyHandler = e => {
+        if (e.key === "Escape") {
+            e.preventDefault();
+            cleanup();
+        }
+    };
+    document.addEventListener("keydown", keyHandler);
+}
+
 // Refresh Money
 async function refreshMoney() {
     const moneySpan = document.getElementById("valeurBanque");
     const res = await fetch("api/money")
     if (!res.ok) {
         console.error("Erreur lors de la récupération de l'argent");
-        return;
     }
     else{
         moneySpan.textContent =  await res.text();
     }
-
 }
 
 // --- Fin de tour ---
 document.getElementById("endTurnBtn").addEventListener("click", async () => {
     await fetch("/api/finTour", { method: "POST" });
-    await loadJoueurs();
+    await updateGameState();
     incrNbRoll();
-    const joueurRes = await fetch("/api/joueurAJouer");
-    const joueur = await joueurRes.json();
-    document.getElementById("currentPlayer").textContent = `C'est au tour de ${joueur.nom}`;
     document.getElementById("actionCoup").textContent = " ";
 });
 
@@ -308,116 +476,73 @@ document.getElementById("endTurnBtn").addEventListener("click", async () => {
 document.getElementById("tirerCarte").addEventListener("click", async () => {
     const resActu = await fetch("/api/caseActuelle");
     const caseActu = await resActu.json();
-
     const caseInfo = plateau[caseActu];
     if (!caseInfo) return;
-
     const nomCase = caseInfo.nom.toLowerCase();
-
-    if (nomCase.includes("chance")) {
-        const resChance = await fetch("/api/chance");
-        if (!resChance.ok) return console.error("Erreur récupération carte Chance");
-        const carte = await resChance.json();
-        afficherCarte(carte, "CHANCE");
-    } else if (nomCase.includes("ccommunauté")) {
-        const resCommu = await fetch("/api/communaute");
-        if (!resCommu.ok) return console.error("Erreur récupération carte Communauté");
-        const carte = await resCommu.json();
-        afficherCarte(carte, "COMMUNAUTE");
-    }
+    if (nomCase.includes("chance")) await caseCarte("CHANCE")
+    else if (nomCase.includes("ccommunauté")) await caseCarte("COMMUNAUTE")
 });
 
 async function incrNbRoll() {
-    const nbRollsP = document.getElementById("nbRollRestant");
     const res = await fetch("api/incrNbRoll");
-    if (!res.ok) {
-        console.error("Erreur lors de l'incrémentation du nombre de rolls");
-        return;
-    } else {
-        nbRollsP.textContent = await res.text();
-    }
+    if (res.ok) document.getElementById("nbRollRestant").textContent = await res.text();
 }
 
 async function decrNbRoll() {
-    const nbRollsP = document.getElementById("nbRollRestant");
     const res = await fetch("api/decrNbRoll");
-    if (!res.ok) {
-        console.error("Erreur lors de la décrémentation du nombre de rolls");
-        return;
-    } else {
-        nbRollsP.textContent = await res.text();
-    }
+    if (res.ok) document.getElementById("nbRollRestant").textContent = await res.text();
 }
 
 async function caseCarte(caseType) {
-    let url = caseType === "CHANCE" ? "/api/chance" : "/api/communaute";
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("Erreur lors de la récupération de la carte");
-
-        const carte = await response.json();
-        afficherCarte(carte, caseType);
-    } catch (err) {
-        console.error(err);
-    }
+    const url = caseType === "CHANCE" ? "/api/chance" : "/api/communaute";
+    const res = await fetch(url);
+    if(!res.ok) return console.error("Erreur de récupération de Carte")
+    const carte = await res.json();
+    afficherCarte(carte, caseType);
 }
 
 function afficherCarte(carte, type) {
     const modal = document.getElementById("carteModal");
-    const titre = document.getElementById("carteTitre");
-    const description = document.getElementById("carteDescription");
-    const boutonOk = document.getElementById("carteOk");
-
-    titre.textContent = type === "CHANCE" ? "Carte Chance" : "Carte Communauté";
-    description.textContent = carte.texte;
-
+    document.getElementById("carteTitre").textContent = type === "CHANCE" ? "Carte Chance" : "Carte Communauté";
+    document.getElementById("carteDescription").textContent = carte.texte;
     modal.style.display = "flex";
 
-    boutonOk.onclick = async () => {
-        // Préparer la carte pour le backend
-        const cartePayload = {
-            nom: carte.nom,
-            texte: carte.texte,
-            action: carte.action,
-            value: carte.value,
-            typeCarte: type
-        };
-
+    document.getElementById("carteOk").onclick = async () => {
+        const cartePayload = { ...carte, typeCarte: type };
         const url = type === "CHANCE" ? "/api/ActionCarteChance" : "/api/ActionCarteCommunaute";
-        try {
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(cartePayload)
-            });
-
-            if (!res.ok) {
-                console.error("Erreur serveur:", await res.text());
-            } else {
-                await updateGameState();
-            }
-        } catch (err) {
-            console.error(err);
-        }
-
+        try { await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cartePayload) }); }
+        catch (err) { console.error(err); }
         modal.style.display = "none";
+        await updateGameState();
     };
 }
 
+// --- updateGameState ---
 async function updateGameState() {
-
     await loadJoueurs();
-
     await refreshMoney();
 
     const resJoueur = await fetch("/api/joueurAJouer");
-    if (resJoueur.ok) {
-        const joueur = await resJoueur.json();
-        document.getElementById("currentPlayer").textContent = `C'est au tour de ${joueur.nom}`;
+    joueurCourrant = await resJoueur.json();
+    document.getElementById("currentPlayer").textContent = `C'est au tour de ${joueurCourrant.nom}`;
+
+    document.getElementById("rollBtn").disabled = false;
+    document.getElementById("endTurnBtn").disabled = false;
+
+    const resEnPrison = await fetch("/api/enPrison");
+    const prisonStatus = await resEnPrison.json();
+
+    if (prisonStatus.enPrison && joueurCourrant) {
+        if (prisonStatus.nbToursPrison === 0) {
+            document.getElementById("message").textContent = "Vous êtes en prison. Ce tour, vous devez passer votre tour.";
+            document.getElementById("rollBtn").disabled = true;
+            document.getElementById("endTurnBtn").disabled = false;
+        } else {
+            await showPrisonMenu(joueurCourrant);
+            return;
+        }
     }
-
     drawPions();
-
     document.getElementById("message").textContent = "État du jeu mis à jour après la carte.";
 }
 

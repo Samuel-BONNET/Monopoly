@@ -2,6 +2,8 @@ package com.monopoly.Monopoly.controller;
 
 import com.monopoly.Monopoly.models.InsufficientFundsException;
 import com.monopoly.Monopoly.models.Joueur;
+import com.monopoly.Monopoly.models.PrisonStatus;
+import com.monopoly.Monopoly.models.RollResult;
 import com.monopoly.Monopoly.models.plateau.Carte;
 import com.monopoly.Monopoly.models.plateau.ICase;
 import com.monopoly.Monopoly.models.plateau.IPossession;
@@ -29,8 +31,8 @@ public class GameController {
         return gameService.getState();
     }
 
-    @PostMapping("/roll")
-    public int[] rollDice() {
+    @GetMapping("/roll")
+    public RollResult rollDice() {
         return gameService.rollDice();
     }
 
@@ -42,6 +44,28 @@ public class GameController {
     @GetMapping("/incrNbRoll")
     public int incrNbRoll() {
         return gameService.incrNbRoll();
+    }
+
+    @GetMapping("/incrNbDouble")
+    public void incrNbDouble(){
+        gameService.incrNbDouble();
+    }
+
+    @GetMapping("/estTripleDouble")
+    public int getNbDouble(){
+        return gameService.getNbDouble();
+    }
+
+    @GetMapping("/enPrison")
+    public PrisonStatus getPrisonStatus() {
+        Joueur joueur = gameService.getJoueurAJouer();
+        return new PrisonStatus(joueur.getEstEnPrison(), joueur.getNbTourEntrePrison());
+    }
+
+    @GetMapping("/peutTenterChance")
+    public boolean peutTenterChance(){
+        Joueur joueur = gameService.getJoueurAJouer();
+        return joueur.getNbTourEntrePrison() < 4;
     }
 
     @GetMapping("/decrNbRoll")
@@ -127,9 +151,14 @@ public class GameController {
 
     // todo : feat incr/decr specific money
 
-    @PostMapping("/deplacer/{joueurIndex}/{nbCases}")
-    public void deplacerJoueur(@PathVariable int joueurIndex, @PathVariable int nbCases) throws InsufficientFundsException {
-        gameService.deplacerJoueur(joueurIndex, nbCases);
+    @PostMapping("/deplacer/{nbCases}")
+    public void deplacerJoueur(@PathVariable int nbCases) throws InsufficientFundsException {
+        gameService.deplacerJoueur(nbCases);
+    }
+
+    @PostMapping("/deplacerJusqua{id}")
+    public void deplacerJusqua(@PathVariable int idCase){
+        gameService.deplacerJusqua(idCase);
     }
 
     @GetMapping("/chance")
@@ -155,6 +184,35 @@ public class GameController {
     @GetMapping ("/actionCase{id}")
     public String appliquerCase(@PathVariable int id) throws InsufficientFundsException {
         return gameService.actionCase(id);
+    }
+
+    @PostMapping("/envoyerPrison")
+    public void allerEnPrison(){
+        gameService.allerEnPrison();
+        deplacerJusqua(10);
+    }
+
+    @PostMapping("/sortiePrison")
+    public void sortiePrison(){
+        gameService.sortiePrison();
+    }
+
+    @GetMapping("/tenterChancePrison")
+    public int[] tenterChancePrison(){
+        int[] des = gameService.tenterChanceDes();
+        return des != null ? des : new int[]{0, 0};
+    }
+
+    @PostMapping("/payerPrison")
+    public boolean payerPrison(){
+        return gameService.payerPrison();
+    }
+
+    @GetMapping("/testPrison")
+    public void testPrison(){
+        Joueur j = gameService.getJoueurAJouer();
+        j.setEstEnPrison(true);
+        j.setNbTourEntrePrison(0);
     }
 
 }

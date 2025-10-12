@@ -1,15 +1,10 @@
 package com.monopoly.Monopoly.models;
 
 
-import java.sql.SQLOutput;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import com.monopoly.Monopoly.models.enums.Argent;
-import com.monopoly.Monopoly.models.plateau.ICase;
-import com.monopoly.Monopoly.models.plateau.IPossession;
 import com.monopoly.Monopoly.models.plateau.Propriete;
 
 public class Joueur {
@@ -142,10 +137,11 @@ public class Joueur {
         return cptDouble;
     }
 
-    public void incrCptDouble(int tour){
-        if(cptDouble == 2){
-            this.allerEnPrison(tour);
-        }
+    public void setCptDouble(int nb){
+        this.cptDouble = nb;
+    }
+
+    public void incrCptDouble(){
         cptDouble++;
     }
 
@@ -278,9 +274,13 @@ public class Joueur {
 
     // others
 
-    public void allerEnPrison(int tour){
+    public void allerEnPrison(){
         this.setEstEnPrison(true);
-        this.tourEntrePrison = tour;
+        this.tourEntrePrison = 0;
+    }
+
+    public void incrTourPrison(){
+        this.tourEntrePrison++;
     }
 
     public void carteSortiPrison(){
@@ -294,5 +294,9 @@ public class Joueur {
 
     public void avancer(int nbCase){
         this.caseActuelle = (this.caseActuelle + nbCase) % 40;
+    }
+
+    public void avancerJusqua(int idCase){
+        this.caseActuelle = idCase;
     }
 }

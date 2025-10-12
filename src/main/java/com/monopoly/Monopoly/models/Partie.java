@@ -8,7 +8,7 @@ import java.util.*;
 
 public class Partie {
 
-    private int nbJoueur, tourGolbal = 0, tourJoueur = 0, carteChanceTirees = 0, carteCommunauteTirees = 0;
+    private int nbJoueur, tourGolbal = 1, tourJoueur = 0, carteChanceTirees = 0, carteCommunauteTirees = 0;
     private boolean victoire = false;
     private Joueur carteChanceSortiPrisonEnJeu = null;
     private Joueur carteCommunauteSortiPrisonEnJeu  = null;
@@ -239,6 +239,9 @@ public class Partie {
             case "Prison":
                 return allerPrison(joueurCourrant);
             case "Parc","Visite-Prison":
+                if(listeJoueurs[tourJoueur].getEstEnPrison()){
+                    return "Payez 50$ ou tentez votre chance aux dès ! ( un double pour sortir de prison )";
+                }
                 return "Rien à signaler";
             default:
                 return "Autre évenement";
@@ -328,7 +331,7 @@ public class Partie {
     }
 
     public String allerPrison(Joueur joueur){
-        joueur.allerEnPrison(tourGolbal);
+        joueur.allerEnPrison();
         return "Vous allez directement en prison sans passer par la case départ !";
     }
 
@@ -339,11 +342,19 @@ public class Partie {
 
     public void incrTourJoueur() {
         tourJoueur = (tourJoueur + 1) % nbJoueur;
-        if (tourJoueur == 0) incrTourGolbal();
     }
 
     public void incrTourGolbal() {
         tourGolbal++;
+        incrTourPrison();
+    }
+
+    public void incrTourPrison(){
+        for(Joueur j : listeJoueurs){
+            if (j.getEstEnPrison()){
+                j.incrTourPrison();
+            }
+        }
     }
 
     public void remplirDeckChance() {
@@ -381,7 +392,7 @@ public class Partie {
     // -------------------------------
 
     public int lancerDesSimple(){
-        return  rand.nextInt(6) + 1;
+        return  rand.nextInt(6000) + 1;
     }
 
     public int[] lancerDesDouble(){
@@ -674,5 +685,9 @@ public class Partie {
 
     public Joueur getJoueurAJouerSuivant(){
         return listeJoueurs[(tourJoueur+1)%nbJoueur];
+    }
+
+    public boolean payerPrison(){
+        return listeJoueurs[tourJoueur].getCapitalTotal() > 50;
     }
 }

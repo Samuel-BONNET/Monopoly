@@ -123,9 +123,11 @@
     <h3 style="text-align: center">
         <p>des 1 :<span id="resultat_des_1"></span></p>
         <p>des 2 :<span id="resultat_des_2"></span></p>
+        <p>valeur double : <span id="nbDouble"></span></p>
     </h3>
     <h4 id="message" style="text-align: center"></h4>
     <h4 id="actionCoup" style="text-align: center"></h4>
+    <h4 id="double" style="text-align: center"></h4>
 </div>
 
 <!-- overlay qui bloque les clics derrière la modale -->
@@ -157,6 +159,25 @@
     </div>
 </div>
 
+<!-- Menu Prison -->
+<div id="miniMenuPrison" style="
+    display:none;
+    position:fixed;      /* fixed pour rester centré même si scroll */
+    padding:15px;
+    background:#fff;
+    border:2px solid #222;
+    border-radius:10px;
+    z-index:200;
+    width:320px;
+    max-width:90vw;
+    box-shadow:0 6px 20px rgba(0,0,0,0.2);
+">
+    <p id="miniMenuTextPrison">Vous etes en Prison, vous avec les choix entre payer ou tenter votre chance aux dés !</p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="rollPrisonBtn">Lancer les dés</button>
+        <button id="payerBtn">Payer 50$</button>
+    </div>
+</div>
 
 <!-- Boutons d'actions -->
 <div id="controls">

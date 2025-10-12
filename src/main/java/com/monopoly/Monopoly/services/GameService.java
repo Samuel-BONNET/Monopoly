@@ -1,8 +1,6 @@
 package com.monopoly.Monopoly.services;
 
-import com.monopoly.Monopoly.models.InsufficientFundsException;
-import com.monopoly.Monopoly.models.Joueur;
-import com.monopoly.Monopoly.models.Partie;
+import com.monopoly.Monopoly.models.*;
 import com.monopoly.Monopoly.models.plateau.*;
 import org.springframework.stereotype.Service;
 
@@ -16,12 +14,6 @@ public class GameService {
 
     private Partie partie;
     private Plateau plateau;
-    private List<Joueur> joueurs = List.of(
-            new Joueur("Alice", "♙"),
-            new Joueur("Bob", "♕"),
-            new Joueur("Charlie", "♠"),
-            new Joueur("Dylan", "♥")
-    );
 
     public GameService() {
         this.partie = new Partie(4);
@@ -42,28 +34,45 @@ public class GameService {
         return state;
     }
 
-    public int[] rollDice() {
-        if(partie.getJoueurAJouer().getLancerDesRestant()==0){
+    public RollResult rollDice() {
+        Joueur joueur = partie.getJoueurAJouer();
+        if(joueur.getLancerDesRestant() == 0){
             partie.getJoueurAJouerSuivant().incrLancerDes();
             return null;
         }
-        else {
-            int des1 = partie.lancerDesSimple();
-            int des2 = partie.lancerDesSimple();
-            int[] total = {des1, des2};
+        int des1 = partie.lancerDesSimple();
+        int des2 = partie.lancerDesSimple();
+        int[] total = {des1, des2};
 
-            if (des1 == des2) partie.getJoueurAJouer().incrCptDouble(partie.getTourGolbal());
-            partie.getJoueurAJouer().avancer(total[0] + total[1]);
+        boolean enPrison = false;
+
+        if (des1 == des2){
+            joueur.incrCptDouble();
+            joueur.incrLancerDes();
+
+            if( joueur.getCptDouble() >= 3){
+                joueur.allerEnPrison();
+                partie.getJoueurAJouerSuivant().incrLancerDes();
+                enPrison = true;
+            }
+        }
+        else{
+            joueur.setCptDouble(0);
+        }
+        if(!enPrison) {
             partie.getJoueurAJouer().decrLancerDes();
             partie.getJoueurAJouerSuivant().incrLancerDes();
-            return total;
         }
-
+        return new RollResult(total, enPrison);
     }
 
     public Joueur finTour() {
+        Joueur joueurAJouer = partie.getJoueurAJouer();
+        if(joueurAJouer.getEstEnPrison()){
+            joueurAJouer.incrTourPrison();
+        }
         partie.incrTourJoueur();
-        return partie.getJoueurAJouer();
+        return joueurAJouer;
     }
 
     public String buyProperty(int id) {
@@ -107,16 +116,26 @@ public class GameService {
     }
 
     public Joueur getJoueurAJouer(){
-        return joueurs.get(getTourJoueur());
+        return partie.getJoueurAJouer();
     }
 
-    public void deplacerJoueur(int joueurIndex, int nbCases){
-        Joueur j = joueurs.get(joueurIndex);
+    public void deplacerJoueur(int nbCases){
+        Joueur j = getJoueurAJouer();
         j.setCaseActuelle((j.getCaseActuelle() + nbCases) % 40);
+    }
+
+    public void deplacerJusqua(int idCase){
+        Joueur joueurCourrant = partie.getJoueurAJouer();
+        joueurCourrant.avancerJusqua(idCase);
     }
 
     public boolean estPropriete(int caseActuelle) {
         return partie.getPlateau().getTotalCase().get(caseActuelle) instanceof IPossession;
+    }
+
+    public PrisonStatus estEnPrison(){
+        Joueur joueur = partie.getJoueurAJouer();
+        return new PrisonStatus(joueur.getEstEnPrison(),joueur.getNbTourEntrePrison());
     }
 
     public Carte getChance(){
@@ -147,11 +166,51 @@ public class GameService {
         return partie.getJoueurAJouer().incrLancerDes();
     }
 
+    public void incrNbDouble(){
+        partie.getJoueurAJouer().incrCptDouble();
+    }
+
     public int decrNbRoll(){
         return partie.getJoueurAJouer().decrLancerDes();
     }
 
     public String actionCase(int id) throws InsufficientFundsException {
         return partie.caseEvenement(id);
+    }
+
+    public int getNbDouble(){
+        return partie.getJoueurAJouer().getCptDouble();
+    }
+
+    public void allerEnPrison(){
+        partie.getJoueurAJouer().allerEnPrison();
+    }
+
+    public void sortiePrison() {
+        Joueur joueurCourrant = partie.getJoueurAJouer();
+        joueurCourrant.setEstEnPrison(false);
+        joueurCourrant.setNbTourEntrePrison(0);
+        joueurCourrant.setCptDouble(0);
+    }
+
+    public int[] tenterChanceDes(){
+        Joueur joueur = getJoueurAJouer();
+        if(!joueur.getEstEnPrison()) return null;
+        int[] sortie = partie.lancerDesDouble();
+        if(sortie[0] == sortie[1]){
+            joueur.setEstEnPrison(false);
+            joueur.setNbTourEntrePrison(0);
+            joueur.incrLancerDes();
+        }
+        return sortie;
+    }
+
+    public int getNbTourPrison(){
+        return partie.getJoueurAJouer().getNbTourEntrePrison();
+    }
+
+    public boolean payerPrison(){
+        return partie.payerPrison();
+
     }
 }
