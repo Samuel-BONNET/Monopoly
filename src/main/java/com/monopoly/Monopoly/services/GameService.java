@@ -119,9 +119,10 @@ public class GameService {
         return partie.getJoueurAJouer();
     }
 
-    public void deplacerJoueur(int nbCases){
+    public String[] deplacerJoueur(int nbCases){
         Joueur j = getJoueurAJouer();
-        j.setCaseActuelle((j.getCaseActuelle() + nbCases) % 40);
+        String sortie = j.avancer(nbCases);
+        return new String[]{partie.getPlateau().getCase(j.getCaseActuelle()).getNom(), sortie };
     }
 
     public void deplacerJusqua(int idCase){
@@ -156,6 +157,10 @@ public class GameService {
 
     public int getMoney(){
         return partie.getJoueurAJouer().getCapitalTotal();
+    }
+
+    public int getMoneyCible(int id){
+        return partie.getJoueur(id).getCapitalTotal();
     }
 
     public int getNbRoll(){

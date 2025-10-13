@@ -139,6 +139,11 @@ public class GameController {
         return gameService.getMoney();
     }
 
+    @PostMapping("/money/{id}")
+    public int getActualMoneyCible(@PathVariable int id){
+        return gameService.getMoneyCible(id);
+    }
+
     @GetMapping("/decrMoney/{amount}")
     public double decrActualMoney(@PathVariable int amount){
         return gameService.getJoueurAJouer().decrCapital(amount);
@@ -152,13 +157,8 @@ public class GameController {
     // todo : feat incr/decr specific money
 
     @PostMapping("/deplacer/{nbCases}")
-    public void deplacerJoueur(@PathVariable int nbCases) throws InsufficientFundsException {
-        gameService.deplacerJoueur(nbCases);
-    }
-
-    @PostMapping("/deplacerJusqua{id}")
-    public void deplacerJusqua(@PathVariable int idCase){
-        gameService.deplacerJusqua(idCase);
+    public String[] deplacerJoueur(@PathVariable int nbCases) throws InsufficientFundsException {
+        return gameService.deplacerJoueur(nbCases);
     }
 
     @GetMapping("/chance")
@@ -189,7 +189,7 @@ public class GameController {
     @PostMapping("/envoyerPrison")
     public void allerEnPrison(){
         gameService.allerEnPrison();
-        deplacerJusqua(10);
+        gameService.deplacerJusqua(10);
     }
 
     @PostMapping("/sortiePrison")

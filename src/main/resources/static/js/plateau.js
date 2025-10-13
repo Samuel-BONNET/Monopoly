@@ -77,14 +77,14 @@ async function initGame() {
 document.getElementById("rollBtn").addEventListener("click", async () => {
 
     const resTour = await fetch("/api/joueurAJouer");
-    const joueurCourrant = await resTour.json();
+    joueurCourrant = await resTour.json();
 
     // Cas où le Joueur est en prison
     const resEnPrison = await fetch("/api/enPrison");
     const prisonStatus = await resEnPrison.json();
 
     if (prisonStatus.enPrison) {
-        if (prisonStatus.nbToursPrison === 0) {
+        if (prisonStatus.enPrison && prisonStatus.nbToursPrison === 0) {
             // Premier tour en prison → pas de roll possible
             document.getElementById("message").textContent = "Premier tour en prison : vous devez passer votre tour.";
             return;
@@ -132,10 +132,15 @@ document.getElementById("rollBtn").addEventListener("click", async () => {
     }
 
     // --- Déplacement joueur ---
-    await fetch(`/api/deplacer/${rollResult.des[0] + rollResult.des[1]}`, { method: 'POST' });
+    const resDeplacementMessage = await fetch(`/api/deplacer/${rollResult.des[0] + rollResult.des[1]}`, { method: 'POST' });
+    const deplacementMessage = await resDeplacementMessage.json();
+    document.getElementById("gain-perte").textContent = deplacementMessage[1];
+    const caseNom = deplacementMessage[0];
     await loadJoueurs();
+    joueurCourrant = joueurs.find(j => j.id === joueurCourrant.id);
+    await refreshMoney();
 
-    const caseNom = plateau[joueurCourrant.caseActuelle]?.nom || "une case inconnue";
+
     document.getElementById("message").textContent = `Vous avancez jusqu'à ${caseNom}.`;
 
     // --- Vérification propriété pour menu achat ---
@@ -265,7 +270,7 @@ async function showAchatMenu(joueur, caseNum) {
             if (res.ok) {
                 document.getElementById("message").textContent = txtRes;
                 await loadJoueurs();
-                refreshMoney();
+                await refreshMoney();
             } else {
                 document.getElementById("message").textContent = `Erreur lors de l'achat : ${txtRes}`;
             }
@@ -455,7 +460,7 @@ async function showPrisonMenu(joueur) {
 // Refresh Money
 async function refreshMoney() {
     const moneySpan = document.getElementById("valeurBanque");
-    const res = await fetch("api/money")
+    const res = await fetch("api/money");
     if (!res.ok) {
         console.error("Erreur lors de la récupération de l'argent");
     }

@@ -292,8 +292,16 @@ public class Joueur {
         else System.out.println("Vous ne pouvez utiliser cette carte qu'en prison !");
     }
 
-    public void avancer(int nbCase){
-        this.caseActuelle = (this.caseActuelle + nbCase) % 40;
+    public String avancer(int nbCase){
+        int caseArrive = (this.caseActuelle + nbCase) % 40;
+        String sortie = " ";
+        if(caseArrive < this.caseActuelle){
+            // Le joueur est / est passé sur la case départ
+            this.incrCapital(200);
+            sortie = "Vous passez par le case départ et recevez 200$ !";
+        }
+        this.caseActuelle = caseArrive;
+        return sortie;
     }
 
     public void avancerJusqua(int idCase){

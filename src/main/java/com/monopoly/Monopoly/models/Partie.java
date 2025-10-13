@@ -392,7 +392,7 @@ public class Partie {
     // -------------------------------
 
     public int lancerDesSimple(){
-        return  rand.nextInt(6000) + 1;
+        return  rand.nextInt(6) + 1;
     }
 
     public int[] lancerDesDouble(){
