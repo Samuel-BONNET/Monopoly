@@ -1,5 +1,6 @@
 package com.monopoly.Monopoly.models.plateau;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.monopoly.Monopoly.models.Joueur;
 
 public class ServicePublic implements IPossession {
@@ -8,6 +9,7 @@ public class ServicePublic implements IPossession {
     private int id, numero, prix;
     private String nom;
     private Joueur proprietaire;
+    private boolean estHypothequee = false;
 
     ServicePublic(int id, String nom) {
         this.id = id;
@@ -40,17 +42,12 @@ public class ServicePublic implements IPossession {
         return prix;
     }
 
-    public boolean getEstHypotheque() {
+    public boolean getEstHypothequee() {
         return false;
     }
 
-    public void setEstHypotheque(boolean estHypotheque) {
-        // Ne fait rien, un service public ne peut pas être hypothéqué
-    }
-
-    public int calculerLoyer() {
-        // ne rien faire
-        return 0;
+    public int getLoyerAPayer() {
+        return 0; //evenement custom
     }
 
     public Joueur getProprietaire() {
@@ -59,5 +56,9 @@ public class ServicePublic implements IPossession {
 
     public void setProprietaire(Joueur joueur){
         this.proprietaire = joueur;
+    }
+
+    public void setEstHypothequee(boolean valeur){
+        this.estHypothequee = valeur;
     }
 }

@@ -248,20 +248,21 @@ public class Partie {
         }
     }
 
-    public void casePropriete(Propriete propriete) throws InsufficientFundsException {
+    public void casePropriete(IPossession possession) throws InsufficientFundsException {
         Joueur joueurActuel = listeJoueurs[tourJoueur];
-        if(joueurActuel.possedePropriete(propriete)){
+        if(joueurActuel.possedePossession(possession) && possession instanceof Propriete){
             // cas ou le joueur possde la propriete
-            choixAmelioration(propriete);
+            choixAmelioration((Propriete) possession);
         }
         else{
-            if (propriete.getProprietaire() != null){
+            if (possession.getProprietaire() != null){
                 // cas ou le joueur ne possede pas la propriete & la propriete à deja été achetée
-                //listeJoueurs[tourJoueur].decrCapital(propriete.getProprietaire(), propriete);
+                listeJoueurs[tourJoueur].decrCapital(possession.getLoyerAPayer());
+                possession.getProprietaire().incrCapital(possession.getLoyerAPayer());
             }
             else{
                 // cas ou le joueur ne possede pas la propriete & la propriete n'a pas été achetée
-                acheter(propriete);
+                acheter(possession);
             }
         }
     }
@@ -462,12 +463,22 @@ public class Partie {
         if (jcourrant.getCapitalTotal()< bienAVendre.getPrixAchat()){
             return "Fonds insuffisants pour acheter " + bienAVendre.getNom();
         }
-        else {
-            bienAVendre.setProprietaire(jcourrant);
-            jcourrant.decrCapital(bienAVendre.getPrixAchat());
-            listePossessionJoueur.put(bienAVendre, jcourrant);
-            return jcourrant.getNom() + " vient de faire l'acquisition de " + bienAVendre.getNom() + " !";
+        bienAVendre.setProprietaire(jcourrant);
+        jcourrant.decrCapital(bienAVendre.getPrixAchat());
+        jcourrant.ajouterPropriete(bienAVendre);
+
+        if (bienAVendre instanceof Gare) {
+            jcourrant.setNbGare(jcourrant.getNbGare() + 1);
         }
+
+        if(bienAVendre instanceof ServicePublic){
+            jcourrant.setNbService(jcourrant.getNbGare() + 1);
+        }
+
+        listePossessionJoueur.put(bienAVendre, jcourrant);
+
+        return jcourrant.getNom() + " vient de faire l'acquisition de " + bienAVendre.getNom() + " !";
+
     }
 
     public void vente(IPossession bienAVendre, Joueur acheteur, int prix) throws InsufficientFundsException {

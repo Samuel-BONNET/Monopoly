@@ -271,6 +271,7 @@ async function showAchatMenu(joueur, caseNum) {
                 document.getElementById("message").textContent = txtRes;
                 await loadJoueurs();
                 await refreshMoney();
+                await refreshPropriete();
             } else {
                 document.getElementById("message").textContent = `Erreur lors de l'achat : ${txtRes}`;
             }
@@ -469,6 +470,45 @@ async function refreshMoney() {
     }
 }
 
+async function refreshPropriete() {
+    const proprieteDiv = document.getElementById("menuPossessions");
+    proprieteDiv.innerHTML = ""; // reset
+
+    const res = await fetch("/api/joueurAJouer");
+    const joueur = await res.json();
+
+    console.log("Joueur courant :", joueur);
+
+    const possessions = joueur.listePossession.filter(p => p != null);
+    console.log("Possessions filtrées :", possessions);
+
+    if (possessions.length === 0) {
+        proprieteDiv.textContent = "Vous n'avez aucune propriété.";
+        return;
+    }
+
+    possessions.forEach(p => {
+        const span = document.createElement("span");
+        span.textContent = `${p.nom || p.Nom || "Propriété"} (${p.typeCase || "?"}) - ${p.prixAchat || p.PrixAchat || 0}$`;
+        span.classList.add("span-item");
+
+        const btn = document.createElement("button");
+        btn.textContent = "Hypothéquer";
+        btn.addEventListener("click", () => {
+            console.log("Hypothéquer :", p.nom || p.Nom);
+            // TODO : Appel API hypothèque
+        });
+
+        const container = document.createElement("div");
+        container.appendChild(span);
+        container.appendChild(btn);
+
+        proprieteDiv.appendChild(container);
+    });
+}
+
+
+
 // --- Fin de tour ---
 document.getElementById("endTurnBtn").addEventListener("click", async () => {
     await fetch("/api/finTour", { method: "POST" });
@@ -526,6 +566,7 @@ function afficherCarte(carte, type) {
 async function updateGameState() {
     await loadJoueurs();
     await refreshMoney();
+    await refreshPropriete();
 
     const resJoueur = await fetch("/api/joueurAJouer");
     joueurCourrant = await resJoueur.json();
@@ -552,3 +593,7 @@ async function updateGameState() {
 }
 
 document.addEventListener("DOMContentLoaded", initGame);
+
+document.addEventListener("DOMContentLoaded", () => {
+    refreshPropriete(); // ton appel pour remplir le menu
+});

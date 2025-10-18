@@ -3,8 +3,10 @@ package com.monopoly.Monopoly.models;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Scanner;
 
+import com.monopoly.Monopoly.models.plateau.IPossession;
 import com.monopoly.Monopoly.models.plateau.Propriete;
 
 public class Joueur {
@@ -12,7 +14,7 @@ public class Joueur {
     private static int compteur_id = 0;
     private int id, caseActuelle = 0, capitalTotal = 1500, nbPropriete = 0, nbMaison = 0, nbHotel = 0, nbGare =0, nbService = 0, tourEntrePrison, cptDouble = 0, lancerDesRestant = 1 ;
     private String nom, pion;
-    private Propriete[] listeProprietes = new Propriete[25];// nb max de propriétés
+    private IPossession[] listePossession = new IPossession[28];// nb max de propriétés
     private boolean estEnPrison = false, estEliminer = false;
 
     public Joueur(int id, String nom, String pion) {
@@ -89,12 +91,12 @@ public class Joueur {
         this.estEliminer = estEliminer;
     }
 
-    public Propriete[] getListe_proprietes() {
-        return listeProprietes;
+    public IPossession[] getListePossession() {
+        return listePossession;
     }
 
-    public Propriete getPropriete(int id){
-        return listeProprietes[id];
+    public IPossession getPropriete(int id){
+        return listePossession[id];
     }
 
     public int getNbPropriete() {
@@ -166,7 +168,7 @@ public class Joueur {
                 ", cptDouble=" + cptDouble +
                 ", nom='" + nom + '\'' +
                 ", pion='" + pion + '\'' +
-                ", listeProprietes=" + Arrays.toString(listeProprietes) +
+                ", listePossession=" + Arrays.toString(listePossession) +
                 ", estEnPrison=" + estEnPrison +
                 ", estEliminer=" + estEliminer +
                 '}';
@@ -211,35 +213,39 @@ public class Joueur {
     // 🏛️ Gestion Patrimoine
     // -------------------------------
 
-    public void ajouterPropriete(Propriete propriete) {
-        listeProprietes[nbPropriete++] = propriete;
+    public void ajouterPropriete(IPossession possession) {
+        listePossession[nbPropriete++] = possession;
     }
 
-    public void supprimerPropriete(Propriete propriete) {
-        listeProprietes[nbPropriete--] = null;
+    public void supprimerPropriete(IPossession possession) {
+        for(int i = 0; i<listePossession.length; i++){
+            if(listePossession[i].equals(possession)){
+                listePossession[i] = null;
+            }
+        }
     }
 
-    public boolean possedePropriete(Propriete propriete) {
-        for (Propriete p : listeProprietes){
-            if (p == propriete) return true;
+    public boolean possedePossession(IPossession possession) {
+        for (IPossession p : listePossession){
+            if (p == possession) return true;
         }
         return false;
     }
 
-    public void supprimerPropriete(int id){
-        for (Propriete p : listeProprietes){
+    public void supprimerPossession(int id){
+        for (IPossession p : listePossession){
             if (p.getId() == id){
-                listeProprietes[nbPropriete--] = null;
+                listePossession[nbPropriete--] = null;
                 return;
             }
         }
     }
 
-    public void rembourserHypotheque(Propriete propriete) throws InsufficientFundsException {
-        int valeur = (int)Math.round((propriete.getPrixAchat()/2)*1.1);
+    public void rembourserHypotheque(IPossession possession) throws InsufficientFundsException {
+        int valeur = (int)Math.round((possession.getPrixAchat()/2)*1.1);
         if (this.capitalTotal >= valeur) {
             this.decrCapital(valeur);
-            propriete.setEstHypothequee(false);
+            possession.setEstHypothequee(false);
         }
         else System.out.println("Capital insuffisant");
     }
@@ -262,12 +268,14 @@ public class Joueur {
 
     public boolean verificationHypothequeGroupe(Propriete propriete) {
         //Verifie si 1 bien au moins est hypothéqué dans le groupe ( impossiblité de construire )
-        for(Propriete p : listeProprietes){
-            if (p.getQuartier() == propriete.getQuartier() && p.getEstHypothequee()){
-                return true;
+        for(IPossession p : listePossession){
+            if(p instanceof Propriete) {
+                if (Objects.equals(((Propriete) p).getQuartier(), propriete.getQuartier()) && ((Propriete) p).getEstHypothequee()) {
+                    return true;
+                }
             }
         }
-        return true;
+        return false;
     }
 
 

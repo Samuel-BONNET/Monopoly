@@ -1,5 +1,6 @@
 package com.monopoly.Monopoly.models.plateau;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.monopoly.Monopoly.models.Joueur;
 
@@ -13,6 +14,7 @@ public class Propriete implements IPossession {
 
     private int nbMaisons, nbHotel;
     private String nom, quartier;
+    @JsonBackReference
     private Joueur proprietaire;
     private boolean estHypothequee,estGroupeComplet,estHotel;
 
@@ -66,6 +68,23 @@ public class Propriete implements IPossession {
 
     public int getLoyer_hotel() {
         return loyerHotel;
+    }
+
+    public int getLoyerAPayer(){
+        // cas où hotel
+        if(nbHotel>0){
+            return loyerHotel;
+        }
+        else{
+            // cas où maison(s)
+            if(nbMaisons>0) return loyerMaison[nbMaisons-1];
+            else{
+                // cas où groupe
+                if(estGroupeComplet) return loyerGroupeComplet;
+            }
+        }
+        // cas ou rien
+        return loyer;
     }
 
     public int getPrix_maison() {

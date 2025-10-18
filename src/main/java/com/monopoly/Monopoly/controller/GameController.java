@@ -1,19 +1,15 @@
 package com.monopoly.Monopoly.controller;
 
-import com.monopoly.Monopoly.models.InsufficientFundsException;
-import com.monopoly.Monopoly.models.Joueur;
-import com.monopoly.Monopoly.models.PrisonStatus;
-import com.monopoly.Monopoly.models.RollResult;
-import com.monopoly.Monopoly.models.plateau.Carte;
-import com.monopoly.Monopoly.models.plateau.ICase;
-import com.monopoly.Monopoly.models.plateau.IPossession;
-import com.monopoly.Monopoly.models.plateau.Plateau;
+import com.monopoly.Monopoly.models.*;
+import com.monopoly.Monopoly.models.plateau.*;
 import com.monopoly.Monopoly.services.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api")
@@ -213,6 +209,24 @@ public class GameController {
         Joueur j = gameService.getJoueurAJouer();
         j.setEstEnPrison(true);
         j.setNbTourEntrePrison(0);
+    }
+
+    @GetMapping("/possession")
+    public PossessionDTO[] getPossession() {
+        Joueur j = gameService.getJoueurAJouer();
+        return Arrays.stream(j.getListePossession())
+                .filter(Objects::nonNull)
+                .map(p -> {
+                    String type = (p instanceof Propriete) ? "Propriete" : "Gare";
+                    return new PossessionDTO(
+                            p.getId(),
+                            p.getNom(),
+                            p.getPrixAchat(),
+                            p.getEstHypothequee(),
+                            type
+                    );
+                })
+                .toArray(PossessionDTO[]::new);
     }
 
 }
