@@ -92,10 +92,4 @@ public class Plateau {
             e.printStackTrace();
         }
     }
-
-
-
-
-
-
 }

@@ -492,22 +492,74 @@ async function refreshPropriete() {
         span.textContent = `${p.nom || p.Nom || "Propriété"} (${p.typeCase || "?"}) - ${p.prixAchat || p.PrixAchat || 0}$`;
         span.classList.add("span-item");
 
-        const btn = document.createElement("button");
-        btn.textContent = "Hypothéquer";
-        btn.addEventListener("click", () => {
+        const btnHypo = document.createElement("button");
+        btnHypo.textContent = "Hypothéquer";
+        btnHypo.id = p.id;
+        btnHypo.addEventListener("click", async () => {
             console.log("Hypothéquer :", p.nom || p.Nom);
-            // TODO : Appel API hypothèque
+            await hypothequer(p.id);
+            btnHypo.disabled
+        });
+
+        const btnRem = document.createElement("button");
+        btnRem.textContent = "Rembourser Hypothéque";
+        btnRem.id = p.id;
+        btnRem.addEventListener("click", async () => {
+            console.log("Remboursement d'Hypothéque :", p.nom || p.Nom);
+            await rembourserHypothequer(p.id);
+            btnRem.disabled
         });
 
         const container = document.createElement("div");
         container.appendChild(span);
-        container.appendChild(btn);
+        container.appendChild(btnHypo)
+        container.appendChild(btnRem);
 
         proprieteDiv.appendChild(container);
     });
 }
 
+async function hypothequer(id){
+    const message = document.getElementById("message");
 
+    const resHypo = await fetch(`api/hypothequer/${id}`, { method: "POST" });
+    const hypo = resHypo.json();
+
+    switch (hypo){
+        case 0:
+            message.textContent = "Déja hypothéqué !";
+            break;
+        case -1:
+            message.textContent = "Ceci n'est pas hypothequable !";
+            break;
+        default:
+            message.textContent = `Hypothèque réussie ! Vous gagnez ${hypo} $ !`;
+            break;
+    }
+    refreshMoney();
+}
+
+async function rembourserHypothequer(id){
+    const message = document.getElementById("message");
+    const resRemHypo = await fetch(`api/rembourserHypo/${id}`, {method: "POST"} );
+    const remHypo = resRemHypo.json();
+
+    switch (remHypo){
+        case 0:
+            message.textContent = "Vous n'avez pas les fonds pour cette action !";
+            break;
+        case -1:
+            message.textContent = "Ce bien n'est pas hypothéqué !";
+            break;
+        case -2:
+            message.textContent = "Ceci n'est pas remboursable !";
+            break;
+        default:
+            message.textContent = `Remboursement réussi ! Vous payez ${remHypo} $`;
+            break;
+    }
+    refreshMoney();
+}
 
 // --- Fin de tour ---
 document.getElementById("endTurnBtn").addEventListener("click", async () => {

@@ -218,4 +218,36 @@ public class GameService {
         return partie.payerPrison();
 
     }
+
+    public int hypothequer(int id){
+        ICase caseActu = partie.getPlateau().getCase(id);
+        if(caseActu instanceof IPossession && !((IPossession) caseActu).getEstHypothequee()){
+            IPossession p = (IPossession) caseActu;
+
+            if (p.getEstHypothequee()) return 0;
+
+            int valeur = p.getPrixAchat()/2;
+            p.setEstHypothequee(true);
+            getJoueurAJouer().incrCapital(valeur);
+            return valeur;
+        }
+        else return -1;
+    }
+
+    public int rembourserHypotheque(int id){
+        ICase caseActu = partie.getPlateau().getCase(id);
+        if(caseActu instanceof IPossession && ((IPossession) caseActu).getEstHypothequee()) {
+            IPossession p = (IPossession) caseActu;
+
+            if (!p.getEstHypothequee()) return -1;
+
+            int valeur = (int) (p.getPrixAchat() * 0.55);
+            if (getJoueurAJouer().getCapitalTotal() < valeur) return 0;
+
+            getJoueurAJouer().decrCapital(valeur);
+            p.setEstHypothequee(false);
+            return valeur;
+        }
+        return -2;
+    }
 }

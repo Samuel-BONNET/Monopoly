@@ -229,4 +229,14 @@ public class GameController {
                 .toArray(PossessionDTO[]::new);
     }
 
+    @PostMapping("/hypothequer/{id}")
+    public int hypothequer(@PathVariable int id){
+        return gameService.hypothequer(id);
+    }
+
+    @PostMapping("/rembourserHypo/{id}")
+    public int rembourserHypotheque(@PathVariable int id){
+        return gameService.rembourserHypotheque(id);
+    }
+
 }
