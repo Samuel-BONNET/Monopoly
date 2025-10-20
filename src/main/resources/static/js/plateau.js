@@ -497,7 +497,7 @@ async function refreshPropriete() {
         btnHypo.id = p.id;
         btnHypo.addEventListener("click", async () => {
             console.log("Hypothéquer :", p.nom || p.Nom);
-            await hypothequer(p.id);
+            await hypothequer(p.id, p.nom);
             btnHypo.disabled
         });
 
@@ -506,7 +506,7 @@ async function refreshPropriete() {
         btnRem.id = p.id;
         btnRem.addEventListener("click", async () => {
             console.log("Remboursement d'Hypothéque :", p.nom || p.Nom);
-            await rembourserHypothequer(p.id);
+            await rembourserHypothequer(p.id, p.nom);
             btnRem.disabled
         });
 
@@ -519,11 +519,11 @@ async function refreshPropriete() {
     });
 }
 
-async function hypothequer(id){
+async function hypothequer(id,nom){
     const message = document.getElementById("message");
 
     const resHypo = await fetch(`api/hypothequer/${id}`, { method: "POST" });
-    const hypo = resHypo.json();
+    const hypo = await resHypo.json();
 
     switch (hypo){
         case 0:
@@ -533,16 +533,15 @@ async function hypothequer(id){
             message.textContent = "Ceci n'est pas hypothequable !";
             break;
         default:
-            message.textContent = `Hypothèque réussie ! Vous gagnez ${hypo} $ !`;
-            break;
+            message.textContent = `Vous venez d'hypothéquer : ${nom}.\nVous gagnez ${hypo} $ !`;
     }
     refreshMoney();
 }
 
-async function rembourserHypothequer(id){
+async function rembourserHypothequer(id, nom){
     const message = document.getElementById("message");
     const resRemHypo = await fetch(`api/rembourserHypo/${id}`, {method: "POST"} );
-    const remHypo = resRemHypo.json();
+    const remHypo = await resRemHypo.json();
 
     switch (remHypo){
         case 0:
@@ -555,7 +554,7 @@ async function rembourserHypothequer(id){
             message.textContent = "Ceci n'est pas remboursable !";
             break;
         default:
-            message.textContent = `Remboursement réussi ! Vous payez ${remHypo} $`;
+            message.textContent = `Vous venez de rembourser l'hypothèque de ${nom}.\nVous payez ${remHypo} $`;
             break;
     }
     refreshMoney();
