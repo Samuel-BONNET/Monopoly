@@ -472,18 +472,23 @@ async function refreshMoney() {
 
 async function refreshPropriete() {
     const proprieteDiv = document.getElementById("menuPossessions");
-    proprieteDiv.innerHTML = ""; // reset
+    let listeContainer = proprieteDiv.querySelector("p");
+
+    if (!listeContainer) {
+        listeContainer = document.createElement("p");
+        proprieteDiv.appendChild(listeContainer);
+    }
+
+    listeContainer.innerHTML = "";
 
     const res = await fetch("/api/joueurAJouer");
     const joueur = await res.json();
 
-    console.log("Joueur courant :", joueur);
-
     const possessions = joueur.listePossession.filter(p => p != null);
-    console.log("Possessions filtrées :", possessions);
+
 
     if (possessions.length === 0) {
-        proprieteDiv.textContent = "Vous n'avez aucune propriété.";
+        listeContainer.textContent = "Vous n'avez aucune propriété.";
         return;
     }
 
@@ -515,7 +520,7 @@ async function refreshPropriete() {
         container.appendChild(btnHypo)
         container.appendChild(btnRem);
 
-        proprieteDiv.appendChild(container);
+        listeContainer.appendChild(container);
     });
 }
 
