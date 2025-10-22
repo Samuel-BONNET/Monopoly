@@ -575,6 +575,7 @@ document.getElementById("endTurnBtn").addEventListener("click", async () => {
 
 // --- Tirer Carte ---
 document.getElementById("tirerCarte").addEventListener("click", async () => {
+    document.getElementById("tirerCarte").disabled = true;
     const resActu = await fetch("/api/caseActuelle");
     const caseActu = await resActu.json();
     const caseInfo = plateau[caseActu];
@@ -582,6 +583,7 @@ document.getElementById("tirerCarte").addEventListener("click", async () => {
     const nomCase = caseInfo.nom.toLowerCase();
     if (nomCase.includes("chance")) await caseCarte("CHANCE")
     else if (nomCase.includes("ccommunauté")) await caseCarte("COMMUNAUTE")
+    updateGameState();
 });
 
 async function incrNbRoll() {
@@ -630,7 +632,7 @@ async function updateGameState() {
 
     document.getElementById("rollBtn").disabled = false;
     document.getElementById("endTurnBtn").disabled = false;
-
+    document.getElementById("tirerCarte").disabled;
     const resEnPrison = await fetch("/api/enPrison");
     const prisonStatus = await resEnPrison.json();
 
