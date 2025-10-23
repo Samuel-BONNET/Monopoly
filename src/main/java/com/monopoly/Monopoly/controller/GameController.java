@@ -71,8 +71,9 @@ public class GameController {
 
     @PostMapping("/finTour")
     public Joueur finTour() {
-        Joueur joueur = gameService.finTour();
-        return joueur;
+        Joueur joueur = getJoueurAjouer();
+        if (joueur.getLancerDesRestant() != 0) return joueur;
+        return gameService.finTour();
     }
 
     @PostMapping("/buy/{id}")
