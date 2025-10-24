@@ -77,9 +77,9 @@ public class GameService {
 
     public String buyProperty(int id) {
         try {
-            Propriete propriete = (Propriete) partie.getPlateau().getCase(id);
-            partie.acheter(propriete);
-            return "Propriété " + propriete.getNom() + " achetée !";
+            IPossession possession = (IPossession) partie.getPlateau().getCase(id);
+            partie.acheter(possession);
+            return "Propriété " + possession.getNom() + " achetée !";
         } catch (Exception e) {
             return "Erreur lors de l'achat : " + e.getMessage();
         }

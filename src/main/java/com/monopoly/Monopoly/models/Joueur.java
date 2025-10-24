@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.monopoly.Monopoly.models.plateau.IPossession;
 import com.monopoly.Monopoly.models.plateau.Propriete;
 
@@ -14,6 +15,7 @@ public class Joueur {
     private static int compteur_id = 0;
     private int id, caseActuelle = 0, capitalTotal = 1500, nbPropriete = 0, nbMaison = 0, nbHotel = 0, nbGare =0, nbService = 0, tourEntrePrison, cptDouble = 0, lancerDesRestant = 1 ;
     private String nom, pion;
+    @JsonProperty
     private IPossession[] listePossession = new IPossession[28];// nb max de propriétés
     private boolean estEnPrison = false, estEliminer = false;
 
