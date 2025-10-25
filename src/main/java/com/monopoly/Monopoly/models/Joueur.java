@@ -285,6 +285,7 @@ public class Joueur {
     // others
 
     public void allerEnPrison(){
+        this.lancerDesRestant = 0;
         this.setEstEnPrison(true);
         this.tourEntrePrison = 0;
     }
