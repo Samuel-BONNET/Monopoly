@@ -1,10 +1,5 @@
 Liste des différentes classe :
 
-fix les id entre diff case;
-lecteur json
-setup borrow, gare, service pu
-prison + 3xdouble (des oui mais pas condition sorti prison)
-defaite / win
-hypotheque
+fix erreur reseau lors achat service pu
 ---TRADE---
 

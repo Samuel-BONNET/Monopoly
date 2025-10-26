@@ -1,6 +1,7 @@
 package com.monopoly.Monopoly.models.plateau;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.monopoly.Monopoly.models.Joueur;
 
 public class ServicePublic implements IPossession {
@@ -8,6 +9,7 @@ public class ServicePublic implements IPossession {
     private static int compteur = 0;
     private int id, numero, prix;
     private String nom;
+    @JsonIgnore
     private Joueur proprietaire;
     private boolean estHypothequee = false;
 
